@@ -1,0 +1,212 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+  <title>{% block title %}{% endblock title %}</title>
+  <meta content="" name="description">
+  <meta content="" name="keywords">
+
+  <!-- Favicons -->
+  <link href="{% static 'assets/img/logo.png' %}" rel="icon">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Raleway:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+
+  <!-- Vendor CSS Files -->
+  <link href="{% static 'assets/vendor/animate.css/animate.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/bootstrap-icons/bootstrap-icons.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/boxicons/css/boxicons.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/glightbox/css/glightbox.min.css' %}" rel="stylesheet">
+  <link href="{% static 'assets/vendor/swiper/swiper-bundle.min.css' %}" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="{% static 'assets/declarer/css/opensans-font.css' %}">
+  <link rel="stylesheet" type="text/css" href="{% static 'assets/declarer/css/roboto-font.css' %}">
+  <link rel="stylesheet" type="text/css" href="assets/declarer/fonts/material-design-iconic-font/css/material-design-iconic-font.min.css' %}">
+  <!-- datepicker -->
+  <link rel="stylesheet" type="text/css" href="{% static 'assets/declarer/css/jquery-ui.min.css' %}">
+  <link rel="stylesheet" href="{% static 'assets/declarer/css/style.css' %}"/>
+  
+
+  <!-- Main CSS File -->
+  <link href="{% static 'assets/css/style.css' %}" rel="stylesheet">
+</head>
+
+<body>
+
+  <!-- ======= Top Bar ======= -->
+  <section id="topbar" class="d-flex align-items-center">
+    <div class="container d-flex justify-content-center justify-content-md-between">
+      <div class="contact-info d-flex align-items-center">
+        <i class="bi bi-envelope-fill"></i><a href="mailto:contact@example.com">info@example.com</a>
+        <i class="bi bi-phone-fill phone-icon"></i> +229 00-00-00-00
+      </div>
+      <div class="social-links d-none d-md-block">
+        <a href="#" class="twitter"><i class="bi bi-twitter"></i></a>
+        <a href="#" class="facebook"><i class="bi bi-facebook"></i></a>
+        <a href="#" class="instagram"><i class="bi bi-instagram"></i></a>
+        <a href="#" class="linkedin"><i class="bi bi-linkedin"></i></i></a>
+        <a href="#" class="linkedin"><i class="bi bi-whatsapp"></i></i></a>
+      </div>
+    </div>
+  </section> 
+
+  <!-- ======= Header ======= -->
+  <header id="header" class="d-flex align-items-center">
+    <div class="container d-flex align-items-center">
+
+      <!-- Uncomment below if you prefer to use an image logo -->
+     <a href="index.html" class="logo me-auto "><img src="{% static 'assets/img/logo.png' %}" alt="" class="img-fluid"></a>
+
+      <nav id="navbar" class="navbar">
+        <ul>
+          <li><a class="nav-link scrollto" href="{% url 'index'%}">Accueil</a></li>
+          <li class="dropdown"><a href="#"><span>Objets</span> <i class="bi bi-chevron-down"></i></a>
+            <ul>
+              <li><a href="#">Objets perdus</a></li>
+              <li><a href="#">Objets Trouvés</a></li>
+            </ul>
+          </li>
+          <li><a class="nav-link scrollto" href="">Services</a></li>
+          <li><a class="nav-link scrollto " href="">A Propos</a></li>          
+          <li><a class="nav-link scrollto" href="{% url 'contact'%}">Contact</a></li>
+          <li><a class="getstarted scrollto" href="">Connexion</a></li>
+        </ul>
+        <i class="bi bi-list mobile-nav-toggle"></i>
+      </nav><!-- .navbar -->
+
+    </div>
+  </header><!-- End Header -->
+
+  {% block breadcrumb %}{% endblock breadcrumb %}
+  {% block message %}
+      {% include 'messages.html' %}
+  {% endblock message %}
+  {% block content %}{% endblock content %}
+
+   <!-- ======= Footer ======= -->
+  <footer id="footer">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-4">
+           <h3><img src="{% static 'assets/img/logo.png' %}"></h3>
+           <p>Et aut eum quis fuga eos sunt ipsa nihil. Labore corporis magni eligendi fuga maxime saepe commodi placeat.</p>
+           <div class="social-links">
+              <a href="#" class="twitter"><i class="bx bxl-twitter"></i></a>
+              <a href="#" class="facebook"><i class="bx bxl-facebook"></i></a>
+              <a href="#" class="instagram"><i class="bx bxl-instagram"></i></a>
+              <a href="#" class="google-plus"><i class="bx bxl-skype"></i></a>
+              <a href="#" class="linkedin"><i class="bx bxl-linkedin"></i></a>
+            </div>
+        </div>
+        <div class="col-lg-4">
+          <div>
+            <h4>Liens Utiles</h4>
+          </div>
+          
+        </div>
+        <div class="col-lg-4">
+          <div>
+            <h4>Souscription</h4>
+          </div>
+          
+        </div>
+      </div>
+     
+      
+      <div class="copyright">
+        &copy; Copyright <strong><span style="color:#ff9700;">IZIFIND</span></strong>. Tout droits réservés
+      </div>
+    </div>
+  </footer><!-- End Footer -->
+
+  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+  {% block script %}
+  <!-- Vendor JS Files -->
+  <script src="{% static 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/glightbox/js/glightbox.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/isotope-layout/isotope.pkgd.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/swiper/swiper-bundle.min.js' %}"></script>
+  <script src="{% static 'assets/vendor/php-email-form/validate.js' %}"></script>
+  <script src="{% static 'assets/jquery/jquery-3.2.1.min.js'%}"></script>
+  <script src="{% static 'assets/declarer/js/jquery.steps.js' %}"></script>
+  <script src="{% static 'assets/jquery/jquery-3.2.1.min.js'%}"></script>
+  <script src="{% static 'assets/declarer/js/jquery-ui.min.js' %}"></script>
+  <script src="{% static 'assets/declarer/js/main.js' %}"></script>
+  <!-- Main JS File -->
+  <script src="{% static 'assets/js/main.js' %}"></script>
+    <!--Display sousCategorie based categorie script-->
+<script>
+    $("#Filtre select[name='categorie']").on('change',function(){
+        console.log('Valeur du champs bien changée');
+        var my_var = $(this);
+        if(my_var.val() != ''){
+            console.log('succès');
+            $("#Filtre select[name='souscategorie']").find('.indication1').nextAll().remove();
+            $.ajax({
+                url:'/'+my_var.val(),
+                type:'GET',
+                success: function(reponse){
+                    let options = '';
+                    reponse.data.forEach(souscategorie => {
+                        options+='<option value='+souscategorie.id+'>'+souscategorie.name+'</option>';
+                    });
+                    $("#Filtre select[name='souscategorie']").find('.indication1').after(options);
+                },
+                error: function(reponse){
+                    console.log('Aucune categorie n\'a cet identifiant');
+                }
+            });
+        }else{
+            $("#Filtre select[name='souscategorie']").find('.indication1').nextAll().remove();
+            console.log('erreur');
+        }
+    });
+</script>
+<!--End script-->
+<!--Display sousCategorie based categorie script-->
+<script>
+    $("#Filtre select[name='souscategorie']").on('change',function(){
+        console.log('Valeur du champs bien changée');
+        var my_var1 = $(this);
+        if(my_var1.val() != ''){
+            console.log('succès');
+            $("#Filtre select[name='marque']").find('.indication2').nextAll().remove();
+            $.ajax({
+                url:'/marque/'+my_var1.val(),
+                type:'GET',
+                success: function(response){
+                    let options = '';
+                    response.data.forEach(marque => {
+                        options+='<option value='+marque.id+'>'+marque.name+'</option>';
+                    });
+                    $("#Filtre select[name='marque']").find('.indication2').after(options);
+                },
+                error: function(response){
+                    console.log('Aucune souscategorie n\'a cet identifiant');
+                }
+            });
+        }else{
+            $("#Filtre select[name='marque']").find('.indication2').nextAll().remove();
+            console.log('erreur');
+        }
+    });
+</script>
+<script> 
+  $(document).ready(function(){
+    $('input[type="radio"]').click(function(){
+        var inputValue = $(this).attr("value");
+        var yesinput = $("." + inputValue);
+        $(".box").not(yesinput).hide();
+        $(yesinput).show();
+    });
+});
+</script>
+  {% endblock script %}
+  {% block extrascript%}
+  {%endblock extrascript%}
+</body>
+</html>
