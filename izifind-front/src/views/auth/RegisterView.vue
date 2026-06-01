@@ -63,7 +63,7 @@ const handleRegister = async () => {
   try {
     await authStore.register(form.value)
     await authStore.login(form.value.username, form.value.password)
-    router.push('/dashboard')
+    router.push(authStore.isAdmin ? '/admin/dashboard' : '/profile')
   } catch (err: any) {
     error.value = err.response?.data?.detail || "Erreur lors de l'inscription"
   } finally {

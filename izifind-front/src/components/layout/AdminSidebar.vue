@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import AdminIcon from '../admin/AdminIcon.vue'
+import { ADMIN_MENU_RESOURCES } from '../../services/adminResources'
+import logoUrl from '../../assets/legacy/img/logo.png'
 </script>
 
 <template>
   <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
-    <div class="app-brand demo">
-      <RouterLink to="/dashboard" class="app-brand-link">
-        <span class="app-brand-text demo menu-text fw-bolder ms-2 text-warning text-uppercase">IZIFIND</span>
+    <div class="app-brand demo admin-brand">
+      <RouterLink to="/admin/dashboard" class="app-brand-link admin-brand-link" aria-label="Administration IZIFIND">
+        <img :src="logoUrl" alt="IZIFIND" class="admin-brand-logo" />
       </RouterLink>
     </div>
 
@@ -14,33 +17,33 @@ import { RouterLink } from 'vue-router'
 
     <ul class="menu-inner py-1">
       <li class="menu-item">
-        <RouterLink to="/dashboard" class="menu-link">
-          <span class="menu-icon">H</span>
+        <RouterLink to="/admin/dashboard" class="menu-link">
+          <AdminIcon name="dashboard" />
           <div>Tableau de bord</div>
         </RouterLink>
       </li>
-      <li class="menu-item">
-        <RouterLink to="/catalog" class="menu-link">
-          <span class="menu-icon">O</span>
-          <div>Objets retrouves</div>
+      <li v-for="resource in ADMIN_MENU_RESOURCES" :key="resource.key" class="menu-item">
+        <RouterLink :to="resource.path" class="menu-link">
+          <AdminIcon :name="resource.icon" />
+          <div>
+            <span>{{ resource.label }}</span>
+            <small>{{ resource.subtitle }}</small>
+          </div>
         </RouterLink>
       </li>
       <li class="menu-item">
-        <RouterLink to="/catalog" class="menu-link">
-          <span class="menu-icon">O</span>
-          <div>Objets perdus</div>
-        </RouterLink>
+        <div class="menu-link is-disabled">
+          <AdminIcon name="users" />
+          <div>
+            <span>Utilisateurs</span>
+            <small>Endpoint backend à exposer plus tard</small>
+          </div>
+        </div>
       </li>
       <li class="menu-item">
-        <RouterLink to="/admin/categories" class="menu-link">
-          <span class="menu-icon">C</span>
-          <div>Categories</div>
-        </RouterLink>
-      </li>
-      <li class="menu-item">
-        <RouterLink to="/admin/roles" class="menu-link">
-          <span class="menu-icon">R</span>
-          <div>Roles</div>
+        <RouterLink to="/" class="menu-link">
+          <AdminIcon name="table" />
+          <div>Site public</div>
         </RouterLink>
       </li>
     </ul>

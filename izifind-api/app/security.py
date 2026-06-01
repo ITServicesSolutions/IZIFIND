@@ -1,16 +1,43 @@
 from datetime import datetime, timedelta
+from hashlib import sha256
 from typing import Optional
-from jose import JWTError, jwt
-from passlib.context import CryptContext
+
+import bcrypt
+from jose import jwt
+
 from .config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+_BCRYPT_SHA256_PREFIX = "bcrypt_sha256$"
+_LEGACY_BCRYPT_PREFIXES = ("$2a$", "$2b$", "$2x$", "$2y$")
+
+
+def _password_bytes(password: str) -> bytes:
+    return password.encode("utf-8")
+
+
+def _bcrypt_sha256_bytes(password: str) -> bytes:
+    return sha256(_password_bytes(password)).digest()
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    # New hashes are stored as "bcrypt_sha256$<bcrypt hash>".
+    if hashed_password.startswith(_BCRYPT_SHA256_PREFIX):
+        encoded_hash = hashed_password[len(_BCRYPT_SHA256_PREFIX) :].encode("utf-8")
+        return bcrypt.checkpw(_bcrypt_sha256_bytes(plain_password), encoded_hash)
+
+    # Legacy hashes are plain bcrypt strings from passlib/db seeds.
+    # bcrypt enforces a 72-byte limit, so we truncate only for those hashes
+    # to preserve compatibility with already-stored passwords.
+    if hashed_password.startswith(_LEGACY_BCRYPT_PREFIXES):
+        return bcrypt.checkpw(_password_bytes(plain_password)[:72], hashed_password.encode("utf-8"))
+
+    return False
+
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    hashed = bcrypt.hashpw(_bcrypt_sha256_bytes(password), bcrypt.gensalt())
+    return f"{_BCRYPT_SHA256_PREFIX}{hashed.decode('utf-8')}"
+
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()

@@ -28,3 +28,9 @@ Vous pouvez definir cette variable dans `frontend/.env.local` si le backend tour
 - catalogue public filtre ;
 - declarations d'objets perdus/trouves ;
 - administration des categories, roles et permissions.
+
+## Routage
+
+- l'espace public reste sur `/`, `/catalog`, `/contact`, `/lost`, `/found`, `/login` et `/register`
+- l'espace administrateur est maintenant exclusivement sous `/admin/...`
+- l'ancien chemin `/dashboard` redirige vers `/admin/dashboard`

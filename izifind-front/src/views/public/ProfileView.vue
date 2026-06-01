@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 
 const authStore = useAuthStore()
-
 const userRoles = computed(() => authStore.user?.roles?.map((role) => role.name).join(', ') || 'Aucun rôle')
 </script>
 

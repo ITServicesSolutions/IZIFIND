@@ -69,8 +69,7 @@ const closeDelete = () => {
 const confirmDelete = async () => {
   if (!resource.value || !deleteTarget.value || !resource.value.deletable) return
   try {
-    const id = deleteTarget.value.id
-    const endpoint = resource.value.deletePath?.(id)
+    const endpoint = resource.value.deletePath?.(deleteTarget.value.id)
     if (!endpoint) return
     await api.delete(endpoint)
     deleteTarget.value = null

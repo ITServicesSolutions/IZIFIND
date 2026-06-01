@@ -67,7 +67,7 @@ const handleLogin = async () => {
 
   try {
     await authStore.login(username.value, password.value)
-    router.push('/dashboard')
+    router.push(authStore.isAdmin ? '/admin/dashboard' : '/profile')
   } catch (err: any) {
     error.value = err.response?.data?.detail || 'Identifiants incorrects'
   } finally {

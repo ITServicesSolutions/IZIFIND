@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from typing import Any
 
@@ -48,7 +49,12 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)) -> Any:
     description="Authentifie l'utilisateur et retourne un token JWT."
 )
 def login(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()) -> Any:
-    user = db.query(User).filter(User.username == form_data.username).first()
+    user = db.query(User).filter(
+        or_(
+            User.username == form_data.username,
+            User.email == form_data.username,
+        )
+    ).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     elif not user.is_active:

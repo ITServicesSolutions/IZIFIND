@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = defineProps<{
+defineProps<{
   open: boolean
   title: string
   message: string
@@ -7,7 +7,7 @@ const props = defineProps<{
   cancelLabel?: string
 }>()
 
-const emit = defineEmits<{
+defineEmits<{
   confirm: []
   cancel: []
 }>()
@@ -15,16 +15,16 @@ const emit = defineEmits<{
 
 <template>
   <Transition name="admin-pop">
-    <div v-if="open" class="admin-swal-backdrop" @click.self="emit('cancel')">
+    <div v-if="open" class="admin-swal-backdrop" @click.self="$emit('cancel')">
       <div class="admin-swal-card">
         <div class="admin-swal-badge">!</div>
         <h3>{{ title }}</h3>
         <p>{{ message }}</p>
         <div class="chip-row admin-swal-actions">
-          <button class="btn btn-secondary" type="button" @click="emit('cancel')">
+          <button class="btn btn-secondary" type="button" @click="$emit('cancel')">
             {{ cancelLabel || 'Annuler' }}
           </button>
-          <button class="btn btn-primary admin-danger-btn" type="button" @click="emit('confirm')">
+          <button class="btn btn-primary admin-danger-btn" type="button" @click="$emit('confirm')">
             {{ confirmLabel || 'Confirmer' }}
           </button>
         </div>

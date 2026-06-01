@@ -26,7 +26,7 @@ const handleLogout = () => {
           <div class="admin-user-chip">
             <div class="avatar">{{ (authStore.user?.username || 'J').slice(0, 1).toUpperCase() }}</div>
             <span>{{ authStore.user?.username || 'John Doe' }}</span>
-            <button class="dropdown-item logout-link" type="button" @click="handleLogout">Log Out</button>
+            <button class="btn-logout-action" type="button" @click="handleLogout">Déconnexion</button>
           </div>
         </li>
       </ul>

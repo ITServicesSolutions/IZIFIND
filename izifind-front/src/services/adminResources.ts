@@ -11,7 +11,6 @@ export type AdminResourceKey =
   | 'promesses'
   | 'temoignages'
   | 'commissariats'
-  | 'roles'
   | 'permissions'
 
 export interface AdminResourceConfig {
@@ -26,7 +25,7 @@ export interface AdminResourceConfig {
   deletePath?: (id: number) => string
 }
 
-export const ADMIN_RESOURCES: AdminResourceConfig[] = [
+export const ADMIN_MENU_RESOURCES: AdminResourceConfig[] = [
   {
     key: 'categories',
     label: 'Categories',
@@ -160,15 +159,6 @@ export const ADMIN_RESOURCES: AdminResourceConfig[] = [
     deletePath: (id) => `/commissariats/${id}`,
   },
   {
-    key: 'roles',
-    label: 'Roles',
-    subtitle: 'Accès et groupements utilisateurs.',
-    path: '/admin/roles',
-    endpoint: '/rbac/roles',
-    icon: 'shield',
-    fields: ['id', 'name', 'description'],
-  },
-  {
     key: 'permissions',
     label: 'Permissions',
     subtitle: 'Autorisations fines du RBAC.',
@@ -179,7 +169,5 @@ export const ADMIN_RESOURCES: AdminResourceConfig[] = [
   },
 ]
 
-export const ADMIN_MENU_RESOURCES = ADMIN_RESOURCES
-
 export const getAdminResource = (key: AdminResourceKey) =>
-  ADMIN_RESOURCES.find((resource) => resource.key === key)
+  ADMIN_MENU_RESOURCES.find((resource) => resource.key === key)
