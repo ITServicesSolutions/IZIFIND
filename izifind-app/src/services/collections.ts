@@ -1,0 +1,63 @@
+import {
+  getCategories,
+  getCommissariats,
+  getCouleurs,
+  getImages,
+  getMarques,
+  getObjects,
+  getModifications,
+  getPermissions,
+  getPromesses,
+  getSousCategories,
+  getStatuts,
+  getTemoignages,
+  getTitres,
+} from './catalog';
+
+export async function loadAdminCollections() {
+  const [
+    categories,
+    sousCategories,
+    marques,
+    couleurs,
+    statuts,
+    objets,
+    images,
+    modifications,
+    promesses,
+    temoignages,
+    commissariats,
+    permissions,
+    titres,
+  ] = await Promise.all([
+    getCategories(),
+    getSousCategories(),
+    getMarques(),
+    getCouleurs(),
+    getStatuts(),
+    getObjects({ is_public: false }),
+    getImages(),
+    getModifications(),
+    getPromesses(),
+    getTemoignages(),
+    getCommissariats(),
+    getPermissions(),
+    getTitres(),
+  ]);
+
+  return {
+    categories,
+    sousCategories,
+    marques,
+    couleurs,
+    statuts,
+    objets,
+    images,
+    modifications,
+    promesses,
+    temoignages,
+    commissariats,
+    permissions,
+    titres,
+  };
+}

@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "IZIFIND",
+    "slug": "izifind-app",
+    "scheme": "izifind",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#07111f"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.izifind.app"
+    },
+    "android": {
+      "package": "com.izifind.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}
