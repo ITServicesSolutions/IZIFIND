@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from hashlib import sha256
 from typing import Optional
+import secrets
 
 import bcrypt
 from jose import jwt
@@ -48,3 +49,35 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
+
+
+def generate_reset_token() -> tuple[str, str]:
+    """
+    Génère un token de réinitialisation de mot de passe.
+    
+    Returns:
+        Tuple de (plain_token, hashed_token)
+        - plain_token: À envoyer à l'utilisateur via email
+        - hashed_token: À stocker en base de données
+    """
+    plain_token = secrets.token_urlsafe(32)
+    # Hash le token avec bcrypt pour le stocker en BD
+    hashed_token = bcrypt.hashpw(plain_token.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    return plain_token, hashed_token
+
+
+def verify_reset_token(plain_token: str, hashed_token: str) -> bool:
+    """
+    Vérifie qu'un token de réinitialisation correspond à son hash stocké.
+    
+    Args:
+        plain_token: Token fourni par l'utilisateur
+        hashed_token: Hash stocké en base de données
+    
+    Returns:
+        True si les tokens correspondent
+    """
+    try:
+        return bcrypt.checkpw(plain_token.encode("utf-8"), hashed_token.encode("utf-8"))
+    except (ValueError, TypeError):
+        return False

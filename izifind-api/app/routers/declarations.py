@@ -1,7 +1,7 @@
 import os
 import uuid
 import shutil
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import date
@@ -176,3 +176,143 @@ async def declarer_trouve(
         "objet": new_objet,
         "commissariat_recommande": recommandation
     }
+
+
+# ═══════════════════════════════════════════════════════════
+#  DECLARATIONS - CRUD Complet
+# ═══════════════════════════════════════════════════════════
+
+@router.get(
+    "/",
+    response_model=List[ObjetSchema],
+    summary="Lister les déclarations",
+    description="[AUTH REQUISE] Lister les déclarations de l'utilisateur avec filtres optionnels."
+)
+def list_declarations(
+    skip: int = 0,
+    limit: int = 100,
+    statut_id: Optional[int] = None,
+    only_mine: bool = True,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    """
+    Liste les déclarations d'objets perdus.
+    Si only_mine=True, retourne uniquement les déclarations de l'utilisateur.
+    """
+    query = db.query(Objet)
+    
+    # Filtrer par statut PERDU ou TRANSMIS
+    statut_perdu = db.query(Statut).filter(Statut.name.ilike("PERDU")).first()
+    statut_transmis = db.query(Statut).filter(Statut.name.ilike("TRANSMIS")).first()
+    
+    statut_ids = []
+    if statut_perdu:
+        statut_ids.append(statut_perdu.id)
+    if statut_transmis:
+        statut_ids.append(statut_transmis.id)
+    
+    if statut_ids:
+        query = query.filter(Objet.statut_id.in_(statut_ids))
+    
+    if statut_id:
+        query = query.filter(Objet.statut_id == statut_id)
+    
+    return query.offset(skip).limit(limit).all()
+
+
+@router.get(
+    "/{declaration_id}",
+    response_model=ObjetSchema,
+    summary="Détail d'une déclaration",
+    description="Récupère les détails d'une déclaration d'objet."
+)
+def get_declaration(
+    declaration_id: int,
+    db: Session = Depends(get_db),
+):
+    objet = db.query(Objet).filter(Objet.id == declaration_id).first()
+    if not objet:
+        raise HTTPException(status_code=404, detail="Déclaration introuvable")
+    return objet
+
+
+@router.put(
+    "/{declaration_id}",
+    response_model=ObjetSchema,
+    summary="Modifier une déclaration",
+    description="[AUTH REQUISE] Modifie une déclaration (propriétaire ou admin)."
+)
+def update_declaration(
+    declaration_id: int,
+    description: Optional[str] = Form(None),
+    lieu: Optional[str] = Form(None),
+    contact_phone: Optional[str] = Form(None),
+    contact_email: Optional[str] = Form(None),
+    recompense: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    """
+    Modifie une déclaration existante.
+    Note: Cette fonction simple ne gère que les champs textuels.
+    """
+    objet = db.query(Objet).filter(Objet.id == declaration_id).first()
+    if not objet:
+        raise HTTPException(status_code=404, detail="Déclaration introuvable")
+    
+    # Mise à jour des champs fournis
+    if description:
+        objet.description = description
+    if lieu is not None:
+        objet.lieu = lieu
+    if contact_phone is not None:
+        objet.contact_phone = contact_phone
+    if contact_email is not None:
+        objet.contact_email = contact_email
+    if recompense is not None:
+        objet.recompense = recompense
+    
+    db.add(objet)
+    db.commit()
+    db.refresh(objet)
+    return objet
+
+
+@router.delete(
+    "/{declaration_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Supprimer une déclaration",
+    description="[AUTH REQUISE] Supprime une déclaration et toutes ses données associées."
+)
+def delete_declaration(
+    declaration_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    objet = db.query(Objet).filter(Objet.id == declaration_id).first()
+    if not objet:
+        raise HTTPException(status_code=404, detail="Déclaration introuvable")
+    
+    # Supprimer les images associées
+    images = db.query(ImageObjet).filter(ImageObjet.objet_id == objet.id).all()
+    for img in images:
+        # Essayer de supprimer le fichier du disque
+        if img.image_url.startswith("/media/"):
+            file_path = os.path.join(MEDIA_DIR, img.image_url.lstrip("/media/"))
+            try:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            except Exception:
+                pass
+        db.delete(img)
+    
+    # Supprimer les promesses
+    promesses = db.query(Promesse).filter(Promesse.objet_id == objet.id).all()
+    for p in promesses:
+        db.delete(p)
+    
+    # Supprimer l'objet
+    db.delete(objet)
+    db.commit()
+    return None

@@ -3,7 +3,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from .routers import auth, rbac, objets, categories, references, images, modifications, commissariats, declarations, temoignages
+from slowapi.errors import RateLimitExceeded
+
+from .utils.rate_limiter import limiter
+from .routers import auth, rbac, objets, categories, references, images, modifications, commissariats, declarations, temoignages, promesse
 # NOTE: Toute création/modification de tables passe désormais par Alembic.
 # Ne JAMAIS utiliser Base.metadata.create_all() ici.
 
@@ -12,6 +15,13 @@ app = FastAPI(
     description="API FastAPI pour la gestion des objets perdus et trouvés",
     version="1.0.0",
 )
+
+# Enregistrer le rate limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, lambda request, exc: HTTPException(
+    status_code=429,
+    detail="Too many requests. Please try again later."
+))
 
 app.add_middleware(
     CORSMiddleware,
@@ -32,6 +42,7 @@ app.include_router(modifications.router)
 app.include_router(commissariats.router)
 app.include_router(declarations.router)
 app.include_router(temoignages.router)
+app.include_router(promesse.router)
 
 # ── Servir les fichiers media (images uploadées) ──────────
 BASE_DIR = Path(__file__).resolve().parent.parent
