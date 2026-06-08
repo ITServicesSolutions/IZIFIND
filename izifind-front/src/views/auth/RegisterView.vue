@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import logoUrl from '../../assets/legacy/img/logo.png'
+import logoUrl from '../../assets/images/logo.png'
 import { useAuthStore } from '../../stores/auth'
 
 const form = ref({

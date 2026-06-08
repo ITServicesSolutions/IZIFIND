@@ -1,6 +1,80 @@
+# ===== Environment & Secrets =====
 .env
+.env.local
+.env.*.local
+
+# ===== Virtual Environment =====
 env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv
+
+# ===== Database =====
 db.sqlite3
+*.db
+*.sqlite
+
+# ===== Media / Uploads =====
+media/
 images/
+uploads/
+
+# ===== Python =====
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ===== Alembic Migrations =====
+alembic/versions/__pycache__/
+
+# ===== Testing =====
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ===== IDE & Editor =====
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.vs/
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# ===== OS-specific =====
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+
+# ===== Misc =====
+*.bak
+*.tmp
+*.orig

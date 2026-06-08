@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import HomeView from '../views/public/HomeView.vue';
+import HomeView from '../views/HomeView.vue';
 import { useAuthStore } from '../stores/auth';
 import type { AdminResourceKey } from '../services/adminResources';
 
@@ -17,10 +17,11 @@ const router = createRouter({
   },
   routes: [
     { path: '/', name: 'home', component: HomeView },
-    { path: '/catalog', name: 'catalog', component: () => import('../views/public/CatalogView.vue') },
+    { path: '/catalog', name: 'catalog', component: () => import('../views/AnnoncesView.vue') },
     { path: '/contact', name: 'contact', component: () => import('../views/public/ContactView.vue') },
-    { path: '/lost', name: 'lost', component: () => import('../views/public/LostView.vue'), meta: { requiresAuth: true } },
-    { path: '/found', name: 'found', component: () => import('../views/public/FoundView.vue') },
+    { path: '/declare', name: 'declare', component: () => import('../views/DeclarerView.vue') },
+    { path: '/lost', redirect: '/declare?type=lost' },
+    { path: '/found', redirect: '/declare?type=found' },
     { path: '/login', name: 'login', component: () => import('../views/auth/LoginView.vue') },
     { path: '/register', name: 'register', component: () => import('../views/auth/RegisterView.vue') },
     { path: '/profile', name: 'profile', component: () => import('../views/public/ProfileView.vue'), meta: { requiresAuth: true } },

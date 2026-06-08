@@ -24,8 +24,8 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="index" options={{ title: 'Accueil', tabBarIcon: icon('home-variant') }} />
       <Tabs.Screen name="catalog" options={{ title: 'Catalogue', tabBarIcon: icon('magnify') }} />
-      <Tabs.Screen name="lost" options={{ title: 'Perdu', tabBarIcon: icon('alert-circle-outline') }} />
-      <Tabs.Screen name="found" options={{ title: 'Trouvé', tabBarIcon: icon('check-decagram-outline') }} />
+      <Tabs.Screen name="declare" options={{ title: 'Déclarer', tabBarIcon: icon('plus-circle-outline') }} />
+      <Tabs.Screen name="map" options={{ title: 'Carte', tabBarIcon: icon('map-marker-outline') }} />
       <Tabs.Screen name="profile" options={{ title: 'Profil', tabBarIcon: icon('account-circle-outline') }} />
       {auth.isAdmin ? <Tabs.Screen name="admin" options={{ title: 'Admin', tabBarIcon: icon('shield-account-outline') }} /> : null}
     </Tabs>

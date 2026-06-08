@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --color-primary:        #f49517;  /* Primary Orange */
+  --color-primary-hover:  #e08310;
+  --color-lost:           #FF6B6B;  /* rouge doux — "Perdu" */
+  --color-found:          #f49517;  /* orange — "Trouvé" */
+  --color-reward:         #F5A623;  /* or — récompenses */
+  --color-dark:           #151a31;  /* Navy Blue — titres */
+  --color-bg:             #FFFFFF;
+  --color-bg-alt:         #faf9f6;  /* Warm Beige — sections alternées */
+  --color-text:           #151a31;  /* Navy Blue */
+  --color-text-muted:     #6B7280;
+  --border-radius-card:   12px;
+  --border-radius-btn:    24px;     /* style "pill" */
+  --shadow-sm:            0 2px 8px rgba(21, 26, 49, 0.05);
+  --shadow-md:            0 8px 20px rgba(21, 26, 49, 0.08);
+  --transition-smooth:    all 0.2s ease;
+}
+
+/* Base utilities based on variables */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: #FFFFFF !important;
+  border-radius: var(--border-radius-btn);
+  padding: 0.75rem 1.75rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(92, 214, 192, 0.35);
+}
+
+.btn-lost {
+  background-color: var(--color-lost);
+  color: #FFFFFF !important;
+  border-radius: var(--border-radius-btn);
+  padding: 0.75rem 1.75rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.btn-lost:hover {
+  background-color: #f75c5c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.35);
+}
+
+.btn-found {
+  background-color: var(--color-found);
+  color: #FFFFFF !important;
+  border-radius: var(--border-radius-btn);
+  padding: 0.75rem 1.75rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.btn-found:hover {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(92, 214, 192, 0.35);
+}
+
+.card {
+  background-color: var(--color-bg);
+  border-radius: var(--border-radius-card);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-smooth);
+  border: 1px solid rgba(26, 26, 46, 0.05);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.badge-lost {
+  background-color: rgba(255, 107, 107, 0.15);
+  color: var(--color-lost);
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-found {
+  background-color: rgba(92, 214, 192, 0.15);
+  color: var(--color-found);
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}

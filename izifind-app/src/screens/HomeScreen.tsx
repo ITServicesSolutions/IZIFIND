@@ -28,8 +28,8 @@ export function HomeScreen() {
         </Text>
 
         <View style={styles.actions}>
-          <PrimaryButton label="J'ai perdu" onPress={() => router.push('/lost')} />
-          <PrimaryButton label="J'ai trouvé" onPress={() => router.push('/found')} variant="secondary" />
+          <PrimaryButton label="J'ai perdu" onPress={() => router.push('/declare?type=lost')} />
+          <PrimaryButton label="J'ai trouvé" onPress={() => router.push('/declare?type=found')} variant="secondary" />
         </View>
       </View>
 

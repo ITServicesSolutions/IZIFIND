@@ -1,5 +1,4 @@
-import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, ViewStyle } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, ViewStyle, StyleProp } from 'react-native';
 import { colors, radius, spacing } from '@/constants/theme';
 
 interface Props {
@@ -8,7 +7,7 @@ interface Props {
   loading?: boolean;
   disabled?: boolean;
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function PrimaryButton({ label, onPress, loading, disabled, variant = 'primary', style }: Props) {

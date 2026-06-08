@@ -4,7 +4,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AppScreen } from '@/components/AppScreen';
 import { Card } from '@/components/Card';
 import { InlineNotice } from '@/components/InlineNotice';
-import { ObjectCard } from '@/components/ObjectCard';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SectionHeader } from '@/components/SectionHeader';
 import { colors, radius, spacing } from '@/constants/theme';

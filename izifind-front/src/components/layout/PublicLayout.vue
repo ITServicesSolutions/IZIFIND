@@ -1,14 +1,26 @@
 <template>
   <div class="public-layout">
-    <PublicTopBar />
-    <PublicHeader />
-    <slot />
-    <PublicFooter />
+    <AppHeader />
+    <main class="main-content">
+      <slot />
+    </main>
+    <AppFooter />
   </div>
 </template>
 
 <script setup lang="ts">
-import PublicFooter from './PublicFooter.vue'
-import PublicHeader from './PublicHeader.vue'
-import PublicTopBar from './PublicTopBar.vue'
+import AppHeader from './AppHeader.vue'
+import AppFooter from './AppFooter.vue'
 </script>
+
+<style scoped>
+.public-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex-grow: 1;
+}
+</style>

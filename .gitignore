@@ -1,0 +1,121 @@
+# ===== Environment & Secrets =====
+.env
+.env.local
+.env.*.local
+.env.example.local
+
+# ===== Python / FastAPI Backend (izifind-api) =====
+# Virtual Environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Database
+db.sqlite3
+*.db
+*.sqlite
+
+# Alembic migrations (cache)
+alembic/versions/__pycache__/
+
+# Media / Uploads
+media/
+uploads/
+images/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ===== Node.js / React Native / Vue =====
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+.expo/
+.expo-shared/
+*.jsbundle
+
+# Development
+.cache/
+.vite/
+.turbo/
+
+# Package manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ===== IDE & Editor =====
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.vs/
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+.vscode-server/
+
+# ===== OS-specific =====
+.DS_Store
+Thumbs.db
+.windows/
+.mac/
+.linux/
+
+# ===== Editor backup/temp files =====
+*.bak
+*.tmp
+*.orig
+.#*
+
+# ===== VS Code workspace settings (local only) =====
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+
+# ===== Misc =====
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes

@@ -3,16 +3,7 @@
 .env.local
 .env.*.local
 
-# ===== Logs =====
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-# ===== Node.js / Package Manager =====
+# ===== Node.js / npm / Yarn =====
 node_modules/
 npm-debug.log*
 yarn-debug.log*
@@ -23,34 +14,42 @@ package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
-# ===== Build Output =====
+# ===== Expo / React Native =====
+.expo/
+.expo-shared/
 dist/
-dist-ssr/
-*.local
-.vite/
+*.jsbundle
+
+# ===== Build Output =====
+build/
+.eas/
 
 # ===== IDE & Editor =====
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
+.VS/
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-.vscode-server/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
 
 # ===== OS-specific =====
+.DS_Store
+Thumbs.db
+.windows/
+.mac/
+.linux/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+
+# ===== Misc =====
 .AppleDouble
 .LSOverride
 ._*
 .Spotlight-V100
 .Trashes
-Thumbs.db
-
-# ===== Misc =====
-*.bak
-*.tmp
-*.orig
-.#*

@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { AppScreen } from '@/components/AppScreen';
 import { Card } from '@/components/Card';
 import { InlineNotice } from '@/components/InlineNotice';
-import { ObjectCard } from '@/components/ObjectCard';
+import { AnnonceCard } from '@/components/AnnonceCard';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SectionHeader } from '@/components/SectionHeader';
 import { colors, radius, spacing } from '@/constants/theme';
@@ -105,11 +105,11 @@ export function CatalogScreen() {
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
-          <ObjectCard objet={item} statusLabel={statusLabel(item.statut_id)} onPress={() => router.push(`/object/${item.id}`)} />
+          <AnnonceCard objet={item} onPress={() => router.push(`/object/${item.id}`)} />
         )}
       />
 
-      <PrimaryButton label="Déclarer un objet perdu" onPress={() => router.push('/lost')} />
+      <PrimaryButton label="Déclarer un objet perdu" onPress={() => router.push('/declare?type=lost')} />
     </AppScreen>
   );
 }

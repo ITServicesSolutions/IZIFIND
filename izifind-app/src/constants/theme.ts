@@ -1,17 +1,28 @@
 export const colors = {
-  background: '#06111f',
-  backgroundSoft: '#0d1b2a',
-  surface: '#0f2136',
-  surfaceAlt: '#13263e',
-  border: 'rgba(255,255,255,0.08)',
-  text: '#f6f3ea',
-  muted: 'rgba(246,243,234,0.72)',
-  accent: '#f97316',
-  accentSoft: '#ffb36b',
-  success: '#2dd4bf',
-  danger: '#f87171',
-  warning: '#fbbf24',
-  info: '#60a5fa',
+  // Common theme colors
+  primary: '#f49517',       // Primary Orange
+  lost: '#FF6B6B',          // rouge doux — "Perdu"
+  found: '#f49517',         // orange — "Trouvé"
+  reward: '#F5A623',        // or — récompenses
+  dark: '#151a31',          // Navy Blue — titres
+  bg: '#FFFFFF',
+  bgAlt: '#faf9f6',         // Warm Beige
+  textMuted: '#6B7280',
+
+  // Legacy mappings to prevent component breakages
+  background: '#FFFFFF',
+  backgroundSoft: '#faf9f6',
+  surface: '#FFFFFF',
+  surfaceAlt: '#faf9f6',
+  border: 'rgba(21, 26, 49, 0.08)',
+  text: '#151a31',
+  muted: '#6B7280',
+  accent: '#f49517',
+  accentSoft: '#FF6B6B',
+  success: '#f49517',
+  danger: '#FF6B6B',
+  warning: '#F5A623',
+  info: '#f49517',
   white: '#ffffff',
   black: '#000000',
 };
@@ -26,19 +37,21 @@ export const spacing = {
 };
 
 export const radius = {
-  sm: 12,
-  md: 18,
-  lg: 24,
-  xl: 32,
+  sm: 8,
+  md: 12,
+  lg: 18,
+  xl: 24,
 };
 
 export const shadow = {
-  color: '#000000',
-  opacity: 0.24,
-  offset: { width: 0, height: 12 },
-  radius: 24,
-  elevation: 6,
+  color: '#151a31',
+  opacity: 0.08,
+  offset: { width: 0, height: 4 },
+  radius: 12,
+  elevation: 3,
 };
 
 export const APP_NAME = 'IZIFIND';
 export const DEFAULT_API_BASE_URL = 'http://localhost:8000/api';
+export const MAPBOX_ACCESS_TOKEN = ''; // Utilise maps simulées
+export const GEO_MOCK_LOCATION = { latitude: 48.8566, longitude: 2.3522 };
