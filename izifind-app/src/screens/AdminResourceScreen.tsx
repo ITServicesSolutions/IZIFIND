@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, FlatList, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/auth/AuthContext';
 import { AppScreen } from '@/components/AppScreen';
 import { Card } from '@/components/Card';
@@ -11,7 +12,7 @@ import { Input } from '@/components/Input';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SelectField } from '@/components/SelectField';
 import { SectionHeader } from '@/components/SectionHeader';
-import { colors, radius, spacing } from '@/constants/theme';
+import { colors, radius, spacing, fontSizes, fontWeights } from '@/constants/theme';
 import { ADMIN_RESOURCES, getAdminResource } from '@/config/resources';
 import { createResource, listResource, updateResource } from '@/services/admin';
 import { http } from '@/services/http';
@@ -305,7 +306,9 @@ export function AdminResourceScreen() {
             style={[styles.booleanToggle, isTrue ? styles.booleanToggleActive : null]}
             onPress={() => setForm((current) => ({ ...current, [field.name]: isTrue ? 'false' : 'true' }))}
           >
-            <Text style={styles.booleanToggleText}>{isTrue ? 'Oui' : 'Non'}</Text>
+            <Text style={[styles.booleanToggleText, isTrue ? styles.booleanToggleTextActive : null]}>
+              {isTrue ? 'Oui' : 'Non'}
+            </Text>
           </Pressable>
         </View>
       );
@@ -365,78 +368,198 @@ export function AdminResourceScreen() {
     );
   }
 
+  // Custom Header
+  const HeaderComponent = (
+    <View style={styles.header}>
+      <Pressable onPress={() => router.replace('/admin')} style={styles.backButton}>
+        <MaterialCommunityIcons name="arrow-left" size={24} color={colors.dark} />
+      </Pressable>
+      <Text style={styles.headerTitle}>{title}</Text>
+      <View style={{ width: 40 }} />
+    </View>
+  );
+
+  const formatItemMeta = (item: Record<string, any>) => {
+    const skip = ['id', 'name', 'description', 'created_at', 'updated_at'];
+    const entries = Object.entries(item).filter(
+      ([k, v]) => !skip.includes(k) && v !== null && v !== undefined && v !== ''
+    );
+    if (entries.length === 0) return 'Aucune donnée supplémentaire';
+    return entries
+      .map(([k, v]) => {
+        const keyText = k.replace(/_id$/, '').replace('_', ' ').toUpperCase();
+        const valText = typeof v === 'boolean' ? (v ? 'Oui' : 'Non') : String(v);
+        return `${keyText}: ${valText}`;
+      })
+      .join('\n');
+  };
+
   return (
-    <AppScreen>
-      <SectionHeader
-        title={title}
-        subtitle={config?.subtitle || 'Ressource métier'}
-        action={<PrimaryButton label="Ajouter" onPress={() => resetForm(null)} style={styles.addButton} />}
-      />
+    <AppScreen header={HeaderComponent} scroll={false} style={styles.screen}>
+      <View style={styles.container}>
+        <SectionHeader
+          title={title}
+          subtitle={config?.subtitle || 'Ressource métier'}
+          action={
+            config?.creatable ? (
+              <PrimaryButton 
+                label="Ajouter" 
+                onPress={() => resetForm(null)} 
+                variant="primary" 
+                size="sm"
+                icon="plus"
+                style={styles.addButton} 
+              />
+            ) : null
+          }
+        />
 
-      {error ? <InlineNotice tone="danger" message={error} /> : null}
-      {loading ? <InlineNotice tone="info" message="Chargement de la ressource..." /> : null}
+        {error ? <InlineNotice tone="danger" message={error} /> : null}
+        {loading ? <InlineNotice tone="info" message="Chargement de la ressource..." /> : null}
 
-      <FlatList
-        scrollEnabled={false}
-        data={items}
-        keyExtractor={(item, index) => String(item.id ?? index)}
-        contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
-          <Card>
-            <View style={styles.row}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.itemTitle}>{config?.listLabel ? config.listLabel(item) : item.name || item.description || `Item #${item.id}`}</Text>
-                <Text style={styles.itemMeta}>{JSON.stringify(item, null, 0)}</Text>
+        <FlatList
+          data={items}
+          keyExtractor={(item, index) => String(item.id ?? index)}
+          contentContainerStyle={styles.list}
+          renderItem={({ item }) => (
+            <Card style={styles.itemCard}>
+              <View style={styles.row}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.itemTitle}>
+                    {config?.listLabel ? config.listLabel(item) : item.name || item.description || `ID #${item.id}`}
+                  </Text>
+                  <Text style={styles.itemMeta} numberOfLines={8}>
+                    {formatItemMeta(item)}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <View style={styles.cardActions}>
-              {config?.editable ? <PrimaryButton label="Modifier" variant="secondary" onPress={() => resetForm(item)} style={styles.cardButton} /> : null}
-              {config?.deletable ? <PrimaryButton label="Supprimer" variant="ghost" onPress={() => handleDelete(item.id)} style={styles.cardButton} /> : null}
-            </View>
-          </Card>
-        )}
-      />
+              <View style={styles.cardActions}>
+                {config?.editable ? (
+                  <PrimaryButton 
+                    label="Modifier" 
+                    variant="secondary" 
+                    size="sm" 
+                    icon="pencil"
+                    onPress={() => resetForm(item)} 
+                    style={styles.cardButton} 
+                  />
+                ) : null}
+                {config?.deletable ? (
+                  <PrimaryButton 
+                    label="Supprimer" 
+                    variant="ghost" 
+                    size="sm" 
+                    icon="trash-can-outline"
+                    onPress={() => handleDelete(item.id)} 
+                    style={styles.cardButton} 
+                  />
+                ) : null}
+              </View>
+            </Card>
+          )}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            !loading ? (
+              <InlineNotice tone="info" message="Aucun élément enregistré pour le moment." />
+            ) : null
+          }
+        />
+      </View>
 
       <Modal visible={formVisible} transparent animationType="slide" onRequestClose={closeModal}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalSheet}>
-            <ScrollView contentContainerStyle={styles.modalContent}>
-              <SectionHeader title={editingItem ? 'Modifier' : 'Créer'} subtitle={title} />
+        <Pressable style={styles.modalBackdrop} onPress={closeModal}>
+          <Pressable style={styles.modalSheet} onPress={() => undefined}>
+            <View style={styles.grabHandle} />
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{editingItem ? 'Modifier' : 'Créer'} — {title}</Text>
+              <Pressable onPress={closeModal} style={styles.closeButton}>
+                <MaterialCommunityIcons name="close" size={20} color={colors.dark} />
+              </Pressable>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.modalContent} showsVerticalScrollIndicator={false}>
               <View style={styles.form}>
                 {config?.fields.map((field) => renderField(field))}
-                <PrimaryButton label={editingItem ? 'Enregistrer' : 'Créer'} loading={saving} onPress={handleSubmit} />
-                <PrimaryButton label="Fermer" variant="secondary" onPress={closeModal} />
+                
+                <View style={styles.formActions}>
+                  <PrimaryButton 
+                    label={editingItem ? 'Enregistrer' : 'Créer'} 
+                    loading={saving} 
+                    onPress={handleSubmit} 
+                    size="lg"
+                    style={styles.formSubmitBtn}
+                  />
+                </View>
               </View>
             </ScrollView>
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    padding: 0,
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: spacing.md,
+    gap: spacing.sm,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(21, 26, 49, 0.04)',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bgAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: fontSizes.lg,
+    fontWeight: fontWeights.bold,
+    color: colors.dark,
+  },
   addButton: {
-    minWidth: 110,
+    minWidth: 100,
   },
   list: {
-    gap: spacing.md,
-    paddingVertical: spacing.md,
+    gap: spacing.sm,
+    paddingBottom: 40,
+  },
+  itemCard: {
+    padding: spacing.md,
+    marginBottom: spacing.xs,
   },
   row: {
     flexDirection: 'row',
     gap: spacing.sm,
   },
   itemTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '800',
+    color: colors.dark,
+    fontSize: fontSizes.md,
+    fontWeight: fontWeights.bold,
   },
   itemMeta: {
-    color: colors.muted,
-    fontSize: 12,
+    color: colors.textMuted,
+    fontSize: fontSizes.xs,
+    fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
     marginTop: 6,
-    lineHeight: 18,
+    lineHeight: 16,
+    backgroundColor: colors.bgAlt,
+    padding: spacing.sm,
+    borderRadius: radius.sm,
   },
   cardActions: {
     flexDirection: 'row',
@@ -448,58 +571,99 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.58)',
+    backgroundColor: 'rgba(21, 26, 49, 0.5)',
     justifyContent: 'flex-end',
   },
   modalSheet: {
-    maxHeight: '92%',
-    backgroundColor: colors.background,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    borderTopWidth: 1,
-    borderColor: colors.border,
-    paddingTop: spacing.md,
+    maxHeight: '85%',
+    backgroundColor: colors.white,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    paddingTop: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    shadowColor: '#151a31',
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
+    elevation: 20,
+  },
+  grabHandle: {
+    width: 38,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: 'rgba(21, 26, 49, 0.1)',
+    alignSelf: 'center',
+    marginBottom: spacing.md,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
+  modalTitle: {
+    color: colors.dark,
+    fontSize: fontSizes.lg,
+    fontWeight: fontWeights.bold,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.bgAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalContent: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl * 2,
+    paddingBottom: 40,
   },
   form: {
     gap: spacing.md,
   },
+  formActions: {
+    marginTop: spacing.md,
+  },
+  formSubmitBtn: {
+    width: '100%',
+  },
   fieldLabel: {
-    color: colors.text,
-    fontWeight: '700',
-    fontSize: 13,
+    color: colors.dark,
+    fontWeight: fontWeights.semibold,
+    fontSize: fontSizes.sm,
   },
   booleanRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   booleanHint: {
-    color: colors.muted,
-    fontSize: 12,
-    marginTop: 4,
+    color: colors.textMuted,
+    fontSize: fontSizes.xs,
+    marginTop: 2,
   },
   booleanToggle: {
     minWidth: 72,
-    borderRadius: 999,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    backgroundColor: colors.surfaceAlt,
+    borderRadius: radius.pill,
+    paddingVertical: 8,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.bgAlt,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(21, 26, 49, 0.08)',
     alignItems: 'center',
   },
   booleanToggleActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   booleanToggleText: {
-    color: colors.text,
-    fontWeight: '800',
+    color: colors.dark,
+    fontWeight: fontWeights.bold,
+    fontSize: fontSizes.sm,
+  },
+  booleanToggleTextActive: {
+    color: colors.white,
   },
 });
+

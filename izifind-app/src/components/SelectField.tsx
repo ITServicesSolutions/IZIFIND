@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radius, spacing } from '@/constants/theme';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { colors, radius, spacing, fontSizes, fontWeights } from '@/constants/theme';
 
 export interface SelectOption {
   label: string;
@@ -28,33 +29,56 @@ export function SelectField({ label, value, options, onChange, placeholder = 'Ch
     <View style={styles.group}>
       <Text style={styles.label}>{label}</Text>
       <Pressable style={styles.trigger} onPress={() => setVisible(true)}>
-        <Text style={[styles.triggerText, !value ? styles.placeholder : null]}>{selectedLabel}</Text>
+        <Text style={[styles.triggerText, !value ? styles.placeholderText : null]}>
+          {selectedLabel}
+        </Text>
+        <MaterialCommunityIcons name="chevron-down" size={20} color={colors.textMuted} />
       </Pressable>
       {helperText ? <Text style={styles.helper}>{helperText}</Text> : null}
 
-      <Modal visible={visible} transparent animationType="fade" onRequestClose={() => setVisible(false)}>
+      <Modal 
+        visible={visible} 
+        transparent 
+        animationType="slide" 
+        onRequestClose={() => setVisible(false)}
+      >
         <Pressable style={styles.backdrop} onPress={() => setVisible(false)}>
-          <Pressable style={styles.modal} onPress={() => undefined}>
-            <Text style={styles.modalTitle}>{label}</Text>
+          <Pressable style={styles.sheet} onPress={() => undefined}>
+            {/* Grab handle indicator */}
+            <View style={styles.grabHandle} />
+            
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>{label}</Text>
+              <Pressable onPress={() => setVisible(false)} style={styles.closeButton}>
+                <MaterialCommunityIcons name="close" size={20} color={colors.dark} />
+              </Pressable>
+            </View>
+
             <FlatList
               data={options}
               keyExtractor={(item) => String(item.value)}
-              renderItem={({ item }) => (
-                <Pressable
-                  style={styles.option}
-                  onPress={() => {
-                    onChange(item.value);
-                    setVisible(false);
-                  }}
-                >
-                  <Text style={styles.optionText}>{item.label}</Text>
-                </Pressable>
-              )}
+              renderItem={({ item }) => {
+                const isSelected = String(item.value) === String(value);
+                return (
+                  <Pressable
+                    style={[styles.option, isSelected ? styles.optionSelected : null]}
+                    onPress={() => {
+                      onChange(item.value);
+                      setVisible(false);
+                    }}
+                  >
+                    <Text style={[styles.optionText, isSelected ? styles.optionTextSelected : null]}>
+                      {item.label}
+                    </Text>
+                    {isSelected && (
+                      <MaterialCommunityIcons name="check" size={20} color={colors.primary} />
+                    )}
+                  </Pressable>
+                );
+              }}
               ItemSeparatorComponent={() => <View style={styles.separator} />}
+              style={styles.list}
             />
-            <Pressable style={styles.cancel} onPress={() => setVisible(false)}>
-              <Text style={styles.cancelText}>Annuler</Text>
-            </Pressable>
           </Pressable>
         </Pressable>
       </Modal>
@@ -65,71 +89,109 @@ export function SelectField({ label, value, options, onChange, placeholder = 'Ch
 const styles = StyleSheet.create({
   group: {
     gap: spacing.xs,
+    marginBottom: spacing.xs,
   },
   label: {
-    color: colors.text,
-    fontSize: 13,
-    fontWeight: '600',
+    color: colors.dark,
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.semibold,
   },
   trigger: {
     minHeight: 50,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceAlt,
-    justifyContent: 'center',
+    borderColor: 'rgba(21, 26, 49, 0.1)',
+    backgroundColor: colors.white,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
   },
   triggerText: {
-    color: colors.text,
-    fontSize: 15,
+    color: colors.dark,
+    fontSize: fontSizes.md,
+    flex: 1,
   },
-  placeholder: {
-    color: 'rgba(246,243,234,0.45)',
+  placeholderText: {
+    color: 'rgba(21, 26, 49, 0.38)',
   },
   helper: {
-    color: colors.muted,
-    fontSize: 12,
+    color: colors.textMuted,
+    fontSize: fontSizes.xs,
+    marginTop: 2,
   },
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.56)',
+    backgroundColor: 'rgba(21, 26, 49, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    paddingTop: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: 40,
+    maxHeight: '75%',
+    shadowColor: '#151a31',
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
+    elevation: 20,
+  },
+  grabHandle: {
+    width: 38,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: 'rgba(21, 26, 49, 0.1)',
+    alignSelf: 'center',
+    marginBottom: spacing.md,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
+  sheetTitle: {
+    color: colors.dark,
+    fontSize: fontSizes.lg,
+    fontWeight: fontWeights.bold,
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.bgAlt,
+    alignItems: 'center',
     justifyContent: 'center',
-    padding: spacing.lg,
   },
-  modal: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    maxHeight: '80%',
-  },
-  modalTitle: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '800',
+  list: {
     marginBottom: spacing.md,
   },
   option: {
     paddingVertical: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  optionSelected: {
+    backgroundColor: 'rgba(244, 149, 23, 0.04)',
+    marginHorizontal: -spacing.lg,
+    paddingHorizontal: spacing.lg,
   },
   optionText: {
-    color: colors.text,
-    fontSize: 15,
+    color: colors.dark,
+    fontSize: fontSizes.md,
+  },
+  optionTextSelected: {
+    color: colors.primary,
+    fontWeight: fontWeights.semibold,
   },
   separator: {
     height: 1,
-    backgroundColor: colors.border,
-  },
-  cancel: {
-    marginTop: spacing.md,
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-  },
-  cancelText: {
-    color: colors.accentSoft,
-    fontWeight: '700',
+    backgroundColor: 'rgba(21, 26, 49, 0.05)',
   },
 });
+
 

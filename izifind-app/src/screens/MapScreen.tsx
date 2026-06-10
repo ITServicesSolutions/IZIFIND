@@ -1,12 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View, ScrollView, Platform } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View, Platform, Linking, Share, Alert } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { AppScreen } from '@/components/AppScreen';
 import { Card } from '@/components/Card';
 import { InlineNotice } from '@/components/InlineNotice';
-import { SectionHeader } from '@/components/SectionHeader';
-import { colors, radius, spacing } from '@/constants/theme';
+import { colors, radius, spacing, fontSizes, fontWeights } from '@/constants/theme';
 import { getCommissariats } from '@/services/catalog';
 import type { Commissariat } from '@/types/api';
 
@@ -22,7 +21,8 @@ export function MapScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  
+  const [bottomSheetExpanded, setBottomSheetExpanded] = useState(false);
+
   // User simulated coordinates
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
 
@@ -102,253 +102,362 @@ export function MapScreen() {
     } as any;
   };
 
-  return (
-    <AppScreen>
-      <SectionHeader
-        title="Commissariats Partenaires"
-        subtitle="Localisez les points relais partenaires pour sécuriser et authentifier vos objets trouvés."
-      />
+  const handleNavigate = (station: Commissariat) => {
+    const url = Platform.select({
+      ios: `maps:0,0?q=${station.name}@${station.latitude},${station.longitude}`,
+      android: `geo:0,0?q=${station.latitude},${station.longitude}(${station.name})`,
+      web: `https://www.google.com/maps/search/?api=1&query=${station.latitude},${station.longitude}`,
+    });
+    if (url) Linking.openURL(url);
+  };
 
+  const handleCall = () => {
+    Alert.alert('Contact', 'Le numéro de ce commissariat n\'est pas renseigné dans la base de données.');
+  };
+
+  const handleShare = async (station: Commissariat) => {
+    try {
+      await Share.share({
+        message: `Retrouvez vos objets au ${station.name}\nAdresse: ${station.adresse || 'Non renseignée'}\nLocalisation: https://www.google.com/maps/search/?api=1&query=${station.latitude},${station.longitude}`,
+      });
+    } catch (error: any) {
+      Alert.alert('Erreur', error.message);
+    }
+  };
+
+  // Custom Header
+  const HeaderComponent = (
+    <View style={styles.header}>
+      <View style={styles.headerLeft}>
+        <View style={styles.headerIconCircle}>
+          <MaterialCommunityIcons name="shield-check" size={20} color={colors.primary} />
+        </View>
+        <View>
+          <Text style={styles.headerTitle}>Commissariats</Text>
+          <Text style={styles.headerSubtitle}>{commissariats.length} points de dépôt</Text>
+        </View>
+      </View>
+      <Pressable
+        style={styles.expandBtn}
+        onPress={() => setBottomSheetExpanded(!bottomSheetExpanded)}
+      >
+        <MaterialCommunityIcons
+          name={bottomSheetExpanded ? 'chevron-down' : 'format-list-bulleted'}
+          size={20}
+          color={colors.dark}
+        />
+      </Pressable>
+    </View>
+  );
+
+  return (
+    <AppScreen header={HeaderComponent} scroll={false} style={styles.screen}>
       {error ? <InlineNotice tone="danger" message={error} /> : null}
       {loading ? <InlineNotice tone="info" message="Chargement de la carte..." /> : null}
 
       {!loading && !error && (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Simulated Map Container */}
-          <Card style={styles.mapCard}>
-            <View style={styles.mapContainer}>
-              {/* Map background grid lines */}
-              <View style={styles.mapGridLineH1} />
-              <View style={styles.mapGridLineH2} />
-              <View style={styles.mapGridLineV1} />
-              <View style={styles.mapGridLineV2} />
-              <View style={styles.radarRing1} />
-              <View style={styles.radarRing2} />
+        <View style={styles.container}>
+          {/* Large Map Container (takes remaining space) */}
+          <View style={[styles.mapContainer, bottomSheetExpanded && styles.mapContainerCompact]}>
+            {/* Map background elements */}
+            <View style={styles.mapGridLineH1} />
+            <View style={styles.mapGridLineH2} />
+            <View style={styles.mapGridLineH3} />
+            <View style={styles.mapGridLineV1} />
+            <View style={styles.mapGridLineV2} />
+            <View style={styles.mapGridLineV3} />
+            <View style={styles.radarRing1} />
+            <View style={styles.radarRing2} />
+            <View style={styles.radarRing3} />
 
-              {/* User location pin */}
-              {userLocation && (
-                <View
-                  style={[
-                    styles.userPinWrapper,
-                    getPositionStyle(userLocation.latitude, userLocation.longitude),
-                  ]}
-                >
-                  <View style={styles.userPinPulse} />
-                  <View style={styles.userPinDot} />
-                </View>
-              )}
-
-              {/* Station pins */}
-              {commissariats.map((station) => {
-                const isSelected = selectedStation?.id === station.id;
-                return (
-                  <Pressable
-                    key={station.id}
-                    style={[
-                      styles.pinWrapper,
-                      getPositionStyle(station.latitude, station.longitude),
-                    ]}
-                    onPress={() => setSelectedStation(station)}
-                  >
-                    <MaterialCommunityIcons
-                      name="shield"
-                      size={isSelected ? 26 : 20}
-                      color={isSelected ? colors.accentSoft : colors.primary}
-                      style={styles.pinShadow}
-                    />
-                    {isSelected && <View style={styles.selectedPinRing} />}
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            {/* Map Legend */}
+            {/* Map legend */}
             <View style={styles.legend}>
               <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: '#FF6B6B' }]} />
-                <Text style={styles.legendText}>Sélectionné</Text>
+                <View style={[styles.legendDot, { backgroundColor: '#3b82f6' }]} />
+                <Text style={styles.legendText}>Vous</Text>
               </View>
               <View style={styles.legendItem}>
                 <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
-                <Text style={styles.legendText}>Commissariat</Text>
-              </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: '#3b82f6' }]} />
-                <Text style={styles.legendText}>Votre position</Text>
+                <Text style={styles.legendText}>Poste</Text>
               </View>
             </View>
-          </Card>
 
-          {/* Selected Station detail drawer */}
-          {selectedStation && (
-            <Card style={styles.detailCard}>
-              <View style={styles.detailHeader}>
-                <View style={styles.detailTitleWrapper}>
-                  <MaterialCommunityIcons name="shield-check" size={24} color={colors.primary} />
-                  <Text style={styles.detailTitle}>{selectedStation.name}</Text>
-                </View>
-                <View style={styles.coordsBadge}>
-                  <Text style={styles.coordsBadgeText}>
-                    {selectedStation.latitude.toFixed(4)}, {selectedStation.longitude.toFixed(4)}
-                  </Text>
-                </View>
+            {/* User location pin */}
+            {userLocation && (
+              <View
+                style={[
+                  styles.userPinWrapper,
+                  getPositionStyle(userLocation.latitude, userLocation.longitude),
+                ]}
+              >
+                <View style={styles.userPinPulse} />
+                <View style={styles.userPinDot} />
               </View>
-              <Text style={styles.detailAddress}>
-                {selectedStation.adresse || 'Adresse non renseignée'}
-              </Text>
-              <View style={styles.detailActions}>
-                <Pressable style={styles.detailActionBtn}>
-                  <MaterialCommunityIcons name="navigation" size={16} color={colors.primary} />
-                  <Text style={styles.detailActionText}>Itinéraire</Text>
-                </Pressable>
-                <Pressable style={styles.detailActionBtn}>
-                  <MaterialCommunityIcons name="phone" size={16} color={colors.primary} />
-                  <Text style={styles.detailActionText}>Contacter</Text>
-                </Pressable>
-              </View>
-            </Card>
-          )}
+            )}
 
-          {/* Stations Search and Directory */}
-          <Card style={styles.listCard}>
-            <Text style={styles.listCardTitle}>Annuaire des commissariats</Text>
-            <View style={styles.searchWrapper}>
-              <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} style={styles.searchIcon} />
-              <TextInput
-                style={styles.searchInput}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholder="Rechercher par nom ou adresse..."
-                placeholderTextColor="rgba(246,243,234,0.45)"
-              />
-            </View>
+            {/* Station pins */}
+            {commissariats.map((station) => {
+              const isSelected = selectedStation?.id === station.id;
+              return (
+                <Pressable
+                  key={station.id}
+                  style={[
+                    styles.pinWrapper,
+                    getPositionStyle(station.latitude, station.longitude),
+                  ]}
+                  onPress={() => setSelectedStation(station)}
+                >
+                  <View style={[styles.pinBackground, isSelected && styles.pinBackgroundSelected]}>
+                    <MaterialCommunityIcons
+                      name="shield"
+                      size={isSelected ? 18 : 14}
+                      color={isSelected ? colors.white : colors.primary}
+                    />
+                  </View>
+                  {isSelected && <View style={styles.selectedPinRing} />}
+                </Pressable>
+              );
+            })}
 
-            <FlatList
-              scrollEnabled={false}
-              data={filteredStations}
-              keyExtractor={(item) => String(item.id)}
-              renderItem={({ item }) => {
-                const isSelected = selectedStation?.id === item.id;
-                return (
-                  <Pressable
-                    style={[styles.listItem, isSelected && styles.listItemSelected]}
-                    onPress={() => setSelectedStation(item)}
-                  >
-                    <View style={styles.listItemTextWrapper}>
-                      <Text style={[styles.listItemName, isSelected && styles.listItemTextSelected]}>
-                        {item.name}
-                      </Text>
-                      <Text style={styles.listItemAddress} numberOfLines={1}>
-                        {item.adresse}
+            {/* Floating Station Detail Bottom Sheet */}
+            {selectedStation && (
+              <Card style={styles.detailCard}>
+                <View style={styles.detailGrab} />
+                <View style={styles.detailHeader}>
+                  <View style={styles.detailTitleWrapper}>
+                    <View style={styles.detailIconCircle}>
+                      <MaterialCommunityIcons name="shield-check" size={18} color={colors.primary} />
+                    </View>
+                    <View style={styles.detailTitleTextWrapper}>
+                      <Text style={styles.detailTitle} numberOfLines={1}>{selectedStation.name}</Text>
+                      <Text style={styles.detailAddress} numberOfLines={1}>
+                        {selectedStation.adresse || 'Adresse non renseignée'}
                       </Text>
                     </View>
-                    <MaterialCommunityIcons
-                      name={isSelected ? 'circle-slice-8' : 'chevron-right'}
-                      size={20}
-                      color={isSelected ? colors.accentSoft : colors.border}
-                    />
+                  </View>
+                  <Pressable onPress={() => setSelectedStation(null)} style={styles.closeBtn}>
+                    <MaterialCommunityIcons name="close" size={14} color={colors.textMuted} />
                   </Pressable>
-                );
-              }}
-              ItemSeparatorComponent={() => <View style={styles.listSeparator} />}
-              ListEmptyComponent={
-                <Text style={styles.emptyText}>Aucun commissariat ne correspond.</Text>
-              }
-            />
-          </Card>
-        </ScrollView>
+                </View>
+                <View style={styles.detailActions}>
+                  <Pressable style={styles.detailActionBtn} onPress={() => handleNavigate(selectedStation)}>
+                    <MaterialCommunityIcons name="navigation-variant-outline" size={16} color={colors.primary} />
+                    <Text style={styles.detailActionText}>Itinéraire</Text>
+                  </Pressable>
+                  <Pressable style={styles.detailActionBtn} onPress={handleCall}>
+                    <MaterialCommunityIcons name="phone-outline" size={16} color={colors.primary} />
+                    <Text style={styles.detailActionText}>Contacter</Text>
+                  </Pressable>
+                  <Pressable style={styles.detailActionBtn} onPress={() => handleShare(selectedStation)}>
+                    <MaterialCommunityIcons name="share-variant-outline" size={16} color={colors.primary} />
+                    <Text style={styles.detailActionText}>Partager</Text>
+                  </Pressable>
+                </View>
+              </Card>
+            )}
+          </View>
+
+          {/* Scrollable Station Directory (Bottom Sheet Style) */}
+          {bottomSheetExpanded && (
+            <Card style={styles.directoryCard}>
+              <View style={styles.directoryGrab} />
+              <View style={styles.directoryHeader}>
+                <Text style={styles.directoryTitle}>Annuaire</Text>
+                <Text style={styles.directoryCount}>{filteredStations.length} résultat{filteredStations.length > 1 ? 's' : ''}</Text>
+              </View>
+              <View style={styles.searchWrapper}>
+                <MaterialCommunityIcons name="magnify" size={18} color={colors.textMuted} style={styles.searchIcon} />
+                <TextInput
+                  style={styles.searchInput}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholder="Rechercher par nom ou adresse..."
+                  placeholderTextColor="rgba(21, 26, 49, 0.38)"
+                />
+                {searchQuery.length > 0 && (
+                  <Pressable onPress={() => setSearchQuery('')} hitSlop={8}>
+                    <MaterialCommunityIcons name="close-circle" size={16} color={colors.textMuted} />
+                  </Pressable>
+                )}
+              </View>
+
+              <FlatList
+                data={filteredStations}
+                keyExtractor={(item) => String(item.id)}
+                contentContainerStyle={styles.list}
+                renderItem={({ item }) => {
+                  const isSelected = selectedStation?.id === item.id;
+                  return (
+                    <Pressable
+                      style={[styles.listItem, isSelected && styles.listItemSelected]}
+                      onPress={() => setSelectedStation(item)}
+                    >
+                      <View style={[styles.listIconCircle, { backgroundColor: isSelected ? 'rgba(255,107,107,0.08)' : colors.pastel.orange }]}>
+                        <MaterialCommunityIcons
+                          name="shield"
+                          size={16}
+                          color={isSelected ? colors.lost : colors.primary}
+                        />
+                      </View>
+                      <View style={styles.listItemTextWrapper}>
+                        <Text style={[styles.listItemName, isSelected && styles.listItemTextSelected]}>
+                          {item.name}
+                        </Text>
+                        <Text style={styles.listItemAddress} numberOfLines={1}>
+                          {item.adresse}
+                        </Text>
+                      </View>
+                      <MaterialCommunityIcons
+                        name={isSelected ? 'check-circle' : 'chevron-right'}
+                        size={18}
+                        color={isSelected ? colors.lost : 'rgba(21, 26, 49, 0.2)'}
+                      />
+                    </Pressable>
+                  );
+                }}
+                ItemSeparatorComponent={() => <View style={styles.listSeparator} />}
+                ListEmptyComponent={
+                  <Text style={styles.emptyText}>Aucun commissariat trouvé.</Text>
+                }
+                showsVerticalScrollIndicator={false}
+              />
+            </Card>
+          )}
+        </View>
       )}
     </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    gap: spacing.lg,
-    paddingBottom: spacing.xxl * 2,
-  },
-  mapCard: {
+  screen: {
     padding: 0,
-    overflow: 'hidden',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(21, 26, 49, 0.04)',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  headerIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.pastel.orange,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: fontSizes.lg,
+    fontWeight: fontWeights.bold,
+    color: colors.dark,
+  },
+  headerSubtitle: {
+    fontSize: fontSizes.xs,
+    color: colors.textMuted,
+    marginTop: 1,
+  },
+  expandBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bgAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  container: {
+    flex: 1,
+    padding: spacing.md,
+    gap: spacing.md,
   },
   mapContainer: {
-    height: 250,
-    backgroundColor: '#0F172A', // Deep space dark map container
+    flex: 1,
+    backgroundColor: '#0F172A',
+    borderRadius: radius.xl,
     position: 'relative',
     overflow: 'hidden',
-  },
-  mapGridLineH1: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: '33%',
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  mapGridLineH2: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: '66%',
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  mapGridLineV1: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: '33%',
-    width: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  mapGridLineV2: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: '66%',
-    width: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  radarRing1: {
-    position: 'absolute',
-    top: '25%',
-    left: '35%',
-    width: 100,
-    height: 100,
-    borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(92, 214, 192, 0.05)',
+    borderColor: 'rgba(21, 26, 49, 0.08)',
   },
-  radarRing2: {
+  mapContainerCompact: {
+    flex: 0,
+    height: 260,
+  },
+  // Grid lines
+  mapGridLineH1: { position: 'absolute', left: 0, right: 0, top: '25%', height: 1, backgroundColor: 'rgba(255,255,255,0.04)' },
+  mapGridLineH2: { position: 'absolute', left: 0, right: 0, top: '50%', height: 1, backgroundColor: 'rgba(255,255,255,0.04)' },
+  mapGridLineH3: { position: 'absolute', left: 0, right: 0, top: '75%', height: 1, backgroundColor: 'rgba(255,255,255,0.04)' },
+  mapGridLineV1: { position: 'absolute', top: 0, bottom: 0, left: '25%', width: 1, backgroundColor: 'rgba(255,255,255,0.04)' },
+  mapGridLineV2: { position: 'absolute', top: 0, bottom: 0, left: '50%', width: 1, backgroundColor: 'rgba(255,255,255,0.04)' },
+  mapGridLineV3: { position: 'absolute', top: 0, bottom: 0, left: '75%', width: 1, backgroundColor: 'rgba(255,255,255,0.04)' },
+  radarRing1: { position: 'absolute', top: '30%', left: '35%', width: 80, height: 80, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(59, 130, 246, 0.06)' },
+  radarRing2: { position: 'absolute', top: '20%', left: '25%', width: 150, height: 150, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(59, 130, 246, 0.04)' },
+  radarRing3: { position: 'absolute', top: '10%', left: '15%', width: 220, height: 220, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(59, 130, 246, 0.02)' },
+  // Legend
+  legend: {
     position: 'absolute',
-    top: '10%',
-    left: '25%',
-    width: 180,
-    height: 180,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(92, 214, 192, 0.03)',
+    top: 12,
+    left: 12,
+    flexDirection: 'row',
+    gap: spacing.md,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
   },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  legendText: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 10,
+    fontWeight: fontWeights.semibold,
+  },
+  // Pins
   pinWrapper: {
     position: 'absolute',
-    transform: [{ translateX: -10 }, { translateY: -10 }],
+    transform: [{ translateX: -14 }, { translateY: -14 }],
     zIndex: 10,
   },
-  pinShadow: {
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 3,
+  pinBackground: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(244, 149, 23, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pinBackgroundSelected: {
+    backgroundColor: colors.lost,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
   },
   selectedPinRing: {
     position: 'absolute',
-    top: -4,
-    left: -4,
-    width: 32,
-    height: 32,
+    top: -5,
+    left: -5,
+    width: 42,
+    height: 42,
     borderRadius: 999,
     borderWidth: 1.5,
-    borderColor: colors.accentSoft,
-    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+    borderColor: 'rgba(255, 107, 107, 0.4)',
   },
   userPinWrapper: {
     position: 'absolute',
@@ -360,45 +469,43 @@ const styles = StyleSheet.create({
     zIndex: 5,
   },
   userPinDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: '#3b82f6',
+    borderWidth: 2,
+    borderColor: colors.white,
   },
   userPinPulse: {
     position: 'absolute',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(59, 130, 246, 0.3)',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
     borderWidth: 1,
-    borderColor: '#3b82f6',
+    borderColor: 'rgba(59, 130, 246, 0.35)',
   },
-  legend: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: spacing.sm,
-    backgroundColor: colors.surfaceAlt,
-    borderTopWidth: 1,
-    borderColor: colors.border,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  legendText: {
-    fontSize: 11,
-    color: colors.textMuted,
-    fontWeight: '600',
-  },
+  // Detail Card (Bottom Sheet on Map)
   detailCard: {
+    position: 'absolute',
+    bottom: spacing.sm,
+    left: spacing.sm,
+    right: spacing.sm,
+    zIndex: 20,
+    padding: spacing.md,
+    paddingTop: spacing.sm,
     gap: spacing.sm,
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+  },
+  detailGrab: {
+    width: 32,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(21,26,49,0.1)',
+    alignSelf: 'center',
+    marginBottom: spacing.xs,
   },
   detailHeader: {
     flexDirection: 'row',
@@ -411,110 +518,148 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     flex: 1,
   },
+  detailIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.pastel.orange,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailTitleTextWrapper: {
+    flex: 1,
+  },
   detailTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  coordsBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: 'rgba(92, 214, 192, 0.08)',
-    borderRadius: 8,
-  },
-  coordsBadgeText: {
-    fontSize: 10,
-    color: colors.primary,
-    fontWeight: '700',
+    color: colors.dark,
+    fontSize: fontSizes.md,
+    fontWeight: fontWeights.bold,
   },
   detailAddress: {
-    color: colors.muted,
-    fontSize: 13,
-    lineHeight: 18,
-    paddingLeft: spacing.xl,
+    color: colors.textMuted,
+    fontSize: fontSizes.xs,
+    marginTop: 1,
+  },
+  closeBtn: {
+    padding: 6,
+    borderRadius: radius.sm,
+    backgroundColor: colors.bgAlt,
   },
   detailActions: {
     flexDirection: 'row',
-    gap: spacing.md,
-    marginTop: spacing.sm,
-    paddingLeft: spacing.xl,
+    gap: spacing.sm,
   },
   detailActionBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 6,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.sm,
+    justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 10,
+    borderRadius: radius.md,
+    backgroundColor: 'rgba(244, 149, 23, 0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(92, 214, 192, 0.25)',
+    borderColor: 'rgba(244, 149, 23, 0.1)',
   },
   detailActionText: {
     color: colors.primary,
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: fontSizes.xs,
+    fontWeight: fontWeights.bold,
   },
-  listCard: {
-    gap: spacing.md,
+  // Directory Bottom Sheet
+  directoryCard: {
+    flex: 1,
+    padding: spacing.md,
+    paddingTop: spacing.sm,
+    gap: spacing.sm,
+    maxHeight: 320,
   },
-  listCardTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '800',
+  directoryGrab: {
+    width: 32,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(21,26,49,0.1)',
+    alignSelf: 'center',
+    marginBottom: spacing.xs,
+  },
+  directoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  directoryTitle: {
+    color: colors.dark,
+    fontSize: fontSizes.md,
+    fontWeight: fontWeights.bold,
+  },
+  directoryCount: {
+    fontSize: fontSizes.xs,
+    color: colors.textMuted,
+    fontWeight: fontWeights.medium,
   },
   searchWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(21, 26, 49, 0.06)',
     borderRadius: radius.md,
-    backgroundColor: colors.surfaceAlt,
+    backgroundColor: colors.bgAlt,
     paddingHorizontal: spacing.md,
+    height: 42,
   },
   searchIcon: {
-    marginRight: spacing.sm,
+    marginRight: spacing.xs,
   },
   searchInput: {
     flex: 1,
-    height: 44,
-    color: colors.text,
-    fontSize: 14,
+    height: '100%',
+    color: colors.dark,
+    fontSize: fontSizes.sm,
+  },
+  list: {
+    gap: 0,
   },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radius.sm,
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    borderRadius: radius.md,
   },
   listItemSelected: {
-    backgroundColor: 'rgba(255, 107, 107, 0.05)',
+    backgroundColor: 'rgba(255, 107, 107, 0.04)',
+  },
+  listIconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   listItemTextWrapper: {
     flex: 1,
-    paddingRight: spacing.md,
   },
   listItemName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.text,
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.bold,
+    color: colors.dark,
   },
   listItemTextSelected: {
-    color: colors.accentSoft,
+    color: colors.lost,
   },
   listItemAddress: {
-    fontSize: 12,
-    color: colors.muted,
-    marginTop: 2,
+    fontSize: fontSizes.xs,
+    color: colors.textMuted,
+    marginTop: 1,
   },
   listSeparator: {
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: 'rgba(21, 26, 49, 0.04)',
   },
   emptyText: {
     textAlign: 'center',
-    color: colors.muted,
-    paddingVertical: spacing.lg,
+    color: colors.textMuted,
+    fontSize: fontSizes.sm,
+    paddingVertical: spacing.md,
   },
 });

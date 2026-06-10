@@ -1,24 +1,50 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View, StyleProp, ViewStyle, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '@/constants/theme';
 
 interface Props {
   children: React.ReactNode;
   scroll?: boolean;
+  header?: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+  contentContainerStyle?: StyleProp<ViewStyle>;
+  keyboardAvoiding?: boolean;
 }
 
-export function AppScreen({ children, scroll = true }: Props) {
+export function AppScreen({ 
+  children, 
+  scroll = true, 
+  header, 
+  style, 
+  contentContainerStyle,
+  keyboardAvoiding = false 
+}: Props) {
+  const content = scroll ? (
+    <ScrollView 
+      style={[styles.container, style]} 
+      contentContainerStyle={[styles.scrollContent, contentContainerStyle]}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
+      {children}
+    </ScrollView>
+  ) : (
+    <View style={[styles.container, styles.nonScrollContent, style]}>{children}</View>
+  );
+
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.backgroundGlow} />
-      <View style={styles.backgroundGlowAlt} />
-      {scroll ? (
-        <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-          {children}
-        </ScrollView>
+      {header}
+      {keyboardAvoiding ? (
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+          style={styles.flex}
+        >
+          {content}
+        </KeyboardAvoidingView>
       ) : (
-        <View style={styles.container}>{children}</View>
+        content
       )}
     </SafeAreaView>
   );
@@ -27,32 +53,20 @@ export function AppScreen({ children, scroll = true }: Props) {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.bgAlt,
+  },
+  flex: {
+    flex: 1,
   },
   container: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    padding: spacing.lg,
+    padding: spacing.md,
     paddingBottom: spacing.xxl * 2,
   },
-  backgroundGlow: {
-    position: 'absolute',
-    top: -100,
-    right: -90,
-    width: 220,
-    height: 220,
-    borderRadius: 220,
-    backgroundColor: 'rgba(249,115,22,0.14)',
-  },
-  backgroundGlowAlt: {
-    position: 'absolute',
-    bottom: -80,
-    left: -60,
-    width: 200,
-    height: 200,
-    borderRadius: 200,
-    backgroundColor: 'rgba(96,165,250,0.12)',
+  nonScrollContent: {
+    padding: spacing.md,
   },
 });

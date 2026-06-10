@@ -1,18 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, View, ScrollView } from 'react-native';
+import { Alert, Image, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/auth/AuthContext';
 import { AppScreen } from '@/components/AppScreen';
 import { Card } from '@/components/Card';
-import { ImagePickerField } from '@/components/ImagePickerField';
 import { InlineNotice } from '@/components/InlineNotice';
 import { Input } from '@/components/Input';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SelectField } from '@/components/SelectField';
 import { SectionHeader } from '@/components/SectionHeader';
-import { colors, radius, spacing } from '@/constants/theme';
+import { colors, radius, spacing, fontSizes, fontWeights } from '@/constants/theme';
 import { getCategories, getSousCategoriesByCategorie } from '@/services/catalog';
 import { createFoundDeclaration, createLostDeclaration } from '@/services/declarations';
 import type { Category, SousCategorie } from '@/types/api';
@@ -29,7 +29,7 @@ type PickedImage = {
 export function DeclareScreen() {
   const router = useRouter();
   const auth = useAuth();
-  
+
   // Retrieve initial mode from query params ('lost' or 'found')
   const { type } = useLocalSearchParams<{ type?: string }>();
   const initialMode = type === 'found' ? 'found' : 'lost';
@@ -41,7 +41,7 @@ export function DeclareScreen() {
   const [loadingCollections, setLoadingCollections] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rewardEnabled, setRewardEnabled] = useState(initialMode === 'lost');
-  
+
   const [latitude, setLatitude] = useState('48.8566');
   const [longitude, setLongitude] = useState('2.3522');
   const [locationNote, setLocationNote] = useState<string>('Localisation non récupérée');
@@ -247,18 +247,44 @@ export function DeclareScreen() {
     }
   };
 
-  return (
-    <AppScreen>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
-        <ScrollView style={styles.flex} contentContainerStyle={styles.scrollContent}>
-          <SectionHeader
-            title="Signaler un objet"
-            subtitle="Déclarez un objet perdu ou trouvé pour le cataloguer dans notre réseau."
-          />
+  // Local photo slot component with improved grid layout
+  const PhotoSlot = ({ label, icon, uri, onPick }: { label: string; icon: keyof typeof MaterialCommunityIcons.glyphMap; uri?: string | null; onPick: () => void }) => (
+    <Pressable style={[styles.photoSlot, uri ? styles.photoSlotHasImage : null]} onPress={onPick}>
+      {uri ? (
+        <>
+          <Image source={{ uri }} style={styles.photoImage} />
+          <View style={styles.photoLabelOverlay}>
+            <MaterialCommunityIcons name="check-circle" size={10} color={colors.white} />
+            <Text style={styles.photoLabelText} numberOfLines={1}>{label}</Text>
+          </View>
+        </>
+      ) : (
+        <View style={styles.photoPlaceholder}>
+          <View style={styles.photoIconCircle}>
+            <MaterialCommunityIcons name={icon} size={22} color={colors.primary} />
+          </View>
+          <Text style={styles.photoLabelTextPlaceholder} numberOfLines={1}>{label}</Text>
+        </View>
+      )}
+    </Pressable>
+  );
 
-          {/* Mode Switcher */}
+  // Custom Header
+  const HeaderComponent = (
+    <View style={styles.headerBar}>
+      <Pressable onPress={() => router.back()} style={styles.backButton}>
+        <MaterialCommunityIcons name="arrow-left" size={22} color={colors.dark} />
+      </Pressable>
+      <Text style={styles.headerTitle}>Signaler un objet</Text>
+      <View style={{ width: 40 }} />
+    </View>
+  );
+
+  return (
+    <AppScreen header={HeaderComponent} keyboardAvoiding style={styles.screen} contentContainerStyle={styles.scrollContent}>
+      {/* Mode Switcher */}
           <Card style={styles.switcherCard}>
-            <Text style={styles.switcherLabel}>Type de signalement :</Text>
+            <Text style={styles.switcherLabel}>Type de signalement</Text>
             <View style={styles.switcherGrid}>
               <PrimaryButton
                 label="J'ai perdu"
@@ -267,6 +293,7 @@ export function DeclareScreen() {
                   setMode('lost');
                   setRewardEnabled(true);
                 }}
+                icon="magnify"
                 style={[
                   styles.switcherBtn,
                   mode === 'lost' && { backgroundColor: colors.lost, borderColor: colors.lost }
@@ -279,6 +306,7 @@ export function DeclareScreen() {
                   setMode('found');
                   setRewardEnabled(false);
                 }}
+                icon="hand-heart"
                 style={[
                   styles.switcherBtn,
                   mode === 'found' && { backgroundColor: colors.primary, borderColor: colors.primary }
@@ -295,159 +323,263 @@ export function DeclareScreen() {
             />
           ) : null}
 
-          <Card>
-            <View style={styles.form}>
-              <SelectField
-                label="Catégorie"
-                value={form.categorie_id}
-                options={categoryOptions}
-                onChange={(value) => setForm((current) => ({ ...current, categorie_id: typeof value === 'number' ? value : null, souscategorie_id: null }))}
-              />
-              <SelectField
-                label="Sous-catégorie"
-                value={form.souscategorie_id}
-                options={subcategoryOptions}
-                onChange={(value) => setForm((current) => ({ ...current, souscategorie_id: typeof value === 'number' ? value : null }))}
-                helperText={form.categorie_id ? undefined : 'Choisissez d’abord une catégorie.'}
-              />
-              <Input
-                label="Description"
-                value={form.description}
-                onChangeText={(value) => setForm((current) => ({ ...current, description: value }))}
-                placeholder="Décrivez l'objet (marque, signes distinctifs...)"
-                multiline
-              />
-              <Input
-                label="Date"
-                value={form.date_action}
-                onChangeText={(value) => setForm((current) => ({ ...current, date_action: value }))}
-                placeholder="YYYY-MM-DD"
-              />
-              <Input
-                label="Lieu"
-                value={form.lieu}
-                onChangeText={(value) => setForm((current) => ({ ...current, lieu: value }))}
-                placeholder="Quartier, rue, repère..."
-              />
-              <Input
-                label="Téléphone"
-                value={form.contact_phone}
-                onChangeText={(value) => setForm((current) => ({ ...current, contact_phone: value }))}
-                keyboardType="phone-pad"
-                placeholder="Ex: 0612345678"
-              />
-              <Input
-                label="Email"
-                value={form.contact_email}
-                onChangeText={(value) => setForm((current) => ({ ...current, contact_email: value }))}
-                keyboardType="email-address"
-                placeholder="Ex: jean.dupont@mail.com"
-              />
+          {/* Section 1: 📦 L'objet */}
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIconCircle}>
+              <MaterialCommunityIcons name="cube-outline" size={18} color={colors.primary} />
+            </View>
+            <Text style={styles.sectionTitle}>Caractéristiques de l'objet</Text>
+          </View>
+          <Card style={styles.sectionCard}>
+            <SelectField
+              label="Catégorie"
+              value={form.categorie_id}
+              options={categoryOptions}
+              onChange={(value) => setForm((current) => ({ ...current, categorie_id: typeof value === 'number' ? value : null, souscategorie_id: null }))}
+            />
+            <SelectField
+              label="Sous-catégorie"
+              value={form.souscategorie_id}
+              options={subcategoryOptions}
+              onChange={(value) => setForm((current) => ({ ...current, souscategorie_id: typeof value === 'number' ? value : null }))}
+              helperText={form.categorie_id ? undefined : 'Choisissez d\'abord une catégorie.'}
+            />
+            <Input
+              label="Description"
+              value={form.description}
+              onChangeText={(value) => setForm((current) => ({ ...current, description: value }))}
+              placeholder="Marque, signes distinctifs, inscriptions..."
+              multiline
+              leftIcon="text"
+            />
+            <Input
+              label="Date de l'événement"
+              value={form.date_action}
+              onChangeText={(value) => setForm((current) => ({ ...current, date_action: value }))}
+              placeholder="AAAA-MM-JJ"
+              leftIcon="calendar"
+            />
+          </Card>
 
-              {mode === 'lost' ? (
-                <View style={styles.rewardBox}>
-                  <Text style={styles.rewardTitle}>Souhaitez-vous offrir une récompense ?</Text>
-                  <View style={styles.rewardActions}>
-                    <PrimaryButton
-                      label="Oui"
-                      variant={rewardEnabled ? 'primary' : 'secondary'}
-                      onPress={() => setRewardEnabled(true)}
-                      style={[styles.rewardButton, rewardEnabled && { backgroundColor: colors.reward, borderColor: colors.reward }]}
-                    />
-                    <PrimaryButton
-                      label="Non"
-                      variant={!rewardEnabled ? 'primary' : 'secondary'}
-                      onPress={() => setRewardEnabled(false)}
-                      style={styles.rewardButton}
+          {/* Section 2: 📍 Localisation */}
+          <View style={styles.sectionHeader}>
+            <View style={[styles.sectionIconCircle, { backgroundColor: colors.pastel.blue }]}>
+              <MaterialCommunityIcons name="map-marker-outline" size={18} color="#60A5FA" />
+            </View>
+            <Text style={styles.sectionTitle}>Localisation</Text>
+          </View>
+          <Card style={styles.sectionCard}>
+            <Input
+              label="Lieu ou repère"
+              value={form.lieu}
+              onChangeText={(value) => setForm((current) => ({ ...current, lieu: value }))}
+              placeholder="Adresse, station, repère..."
+              leftIcon="map-marker-outline"
+            />
+            {mode === 'found' && (
+              <View style={styles.coordBox}>
+                <InlineNotice tone="info" title="Position GPS" message={locationNote} />
+                <View style={styles.coordsRow}>
+                  <View style={styles.flex}>
+                    <Input
+                      label="Latitude"
+                      value={latitude}
+                      onChangeText={setLatitude}
+                      keyboardType="numeric"
+                      placeholder="48.8566"
                     />
                   </View>
-                  {rewardEnabled ? (
+                  <View style={styles.flex}>
                     <Input
-                      label="Montant de la récompense (€)"
-                      value={form.montant_promesse}
-                      onChangeText={(value) => setForm((current) => ({ ...current, montant_promesse: value }))}
+                      label="Longitude"
+                      value={longitude}
+                      onChangeText={setLongitude}
                       keyboardType="numeric"
-                      placeholder="Ex: 50"
+                      placeholder="2.3522"
                     />
-                  ) : null}
+                  </View>
                 </View>
-              ) : (
-                <View style={styles.coordBox}>
-                  <InlineNotice tone="info" title="Localisation" message={locationNote} />
-                  <Input
-                    label="Latitude"
-                    value={latitude}
-                    onChangeText={setLatitude}
-                    keyboardType="numeric"
-                    placeholder="48.8566"
-                  />
-                  <Input
-                    label="Longitude"
-                    value={longitude}
-                    onChangeText={setLongitude}
-                    keyboardType="numeric"
-                    placeholder="2.3522"
-                  />
-                </View>
-              )}
-
-              <View style={styles.photosSection}>
-                <Text style={styles.photosTitle}>Photos obligatoires (3 requis)</Text>
-                <ImagePickerField label="Photo de profil" uri={images.profil?.uri} onPick={() => pickImage('profil')} />
-                <ImagePickerField label="Photo de face" uri={images.face?.uri} onPick={() => pickImage('face')} />
-                <ImagePickerField label="Photo de derrière" uri={images.derriere?.uri} onPick={() => pickImage('derriere')} />
               </View>
-
-              {error ? <InlineNotice tone="danger" message={error} /> : null}
-              {loadingCollections ? <InlineNotice tone="info" message="Chargement des référentiels..." /> : null}
-              <PrimaryButton label="Soumettre la déclaration" loading={loading} onPress={handleSubmit} />
-            </View>
+            )}
           </Card>
-        </ScrollView>
-      </KeyboardAvoidingView>
+
+          {/* Section 3: 📞 Contact & Récompense */}
+          <View style={styles.sectionHeader}>
+            <View style={[styles.sectionIconCircle, { backgroundColor: colors.pastel.green }]}>
+              <MaterialCommunityIcons name="phone-outline" size={18} color="#2DD4BF" />
+            </View>
+            <Text style={styles.sectionTitle}>Contact & Récompense</Text>
+          </View>
+          <Card style={styles.sectionCard}>
+            <Input
+              label="Numéro de téléphone"
+              value={form.contact_phone}
+              onChangeText={(value) => setForm((current) => ({ ...current, contact_phone: value }))}
+              keyboardType="phone-pad"
+              placeholder="Ex: 0612345678"
+              leftIcon="phone-outline"
+            />
+            <Input
+              label="Email de contact"
+              value={form.contact_email}
+              onChangeText={(value) => setForm((current) => ({ ...current, contact_email: value }))}
+              keyboardType="email-address"
+              placeholder="Ex: jean.dupont@mail.com"
+              leftIcon="email-outline"
+            />
+
+            {mode === 'lost' && (
+              <View style={styles.rewardBox}>
+                <Text style={styles.rewardTitle}>Souhaitez-vous offrir une récompense ?</Text>
+                <View style={styles.rewardActions}>
+                  <PrimaryButton
+                    label="Oui"
+                    variant={rewardEnabled ? 'primary' : 'secondary'}
+                    onPress={() => setRewardEnabled(true)}
+                    style={[styles.rewardButton, rewardEnabled && { backgroundColor: colors.reward, borderColor: colors.reward }]}
+                  />
+                  <PrimaryButton
+                    label="Non"
+                    variant={!rewardEnabled ? 'primary' : 'secondary'}
+                    onPress={() => setRewardEnabled(false)}
+                    style={styles.rewardButton}
+                  />
+                </View>
+                {rewardEnabled && (
+                  <Input
+                    label="Montant de la récompense (€)"
+                    value={form.montant_promesse}
+                    onChangeText={(value) => setForm((current) => ({ ...current, montant_promesse: value }))}
+                    keyboardType="numeric"
+                    placeholder="Ex: 50"
+                    leftIcon="cash-multiple"
+                  />
+                )}
+              </View>
+            )}
+          </Card>
+
+          {/* Section 4: 📸 Photos (3-column grid) */}
+          <View style={styles.sectionHeader}>
+            <View style={[styles.sectionIconCircle, { backgroundColor: colors.pastel.purple }]}>
+              <MaterialCommunityIcons name="camera-outline" size={18} color="#A882FF" />
+            </View>
+            <Text style={styles.sectionTitle}>Photos requises (3 angles)</Text>
+          </View>
+          <Card style={styles.sectionCard}>
+            <View style={styles.photosGrid}>
+              <PhotoSlot label="Profil" icon="account-outline" uri={images.profil?.uri} onPick={() => pickImage('profil')} />
+              <PhotoSlot label="Face" icon="image-outline" uri={images.face?.uri} onPick={() => pickImage('face')} />
+              <PhotoSlot label="Derrière" icon="image-multiple-outline" uri={images.derriere?.uri} onPick={() => pickImage('derriere')} />
+            </View>
+            <Text style={styles.photosHint}>Touchez chaque cadre pour ajouter une photo</Text>
+          </Card>
+
+          {error ? <InlineNotice tone="danger" message={error} /> : null}
+          {loadingCollections ? <InlineNotice tone="info" message="Chargement des référentiels..." /> : null}
+
+      <PrimaryButton
+        label="Soumettre la déclaration"
+        loading={loading}
+        onPress={handleSubmit}
+        size="lg"
+        icon="send"
+        style={styles.submitButton}
+      />
     </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    padding: 0,
+  },
   flex: {
     flex: 1,
   },
   scrollContent: {
-    gap: spacing.lg,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
     paddingBottom: spacing.xxl * 2,
+  },
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(21, 26, 49, 0.04)',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bgAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: fontSizes.lg,
+    fontWeight: fontWeights.bold,
+    color: colors.dark,
   },
   switcherCard: {
     gap: spacing.sm,
     padding: spacing.md,
   },
   switcherLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.text,
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.bold,
+    color: colors.dark,
   },
   switcherGrid: {
     flexDirection: 'row',
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   switcherBtn: {
     flex: 1,
   },
-  form: {
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    marginBottom: 2,
+    paddingHorizontal: spacing.xs,
+  },
+  sectionIconCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: colors.pastel.orange,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sectionTitle: {
+    fontSize: fontSizes.md,
+    fontWeight: fontWeights.bold,
+    color: colors.dark,
+  },
+  sectionCard: {
+    padding: spacing.md,
     gap: spacing.md,
   },
   rewardBox: {
-    gap: spacing.md,
+    gap: spacing.sm,
     padding: spacing.md,
     borderRadius: radius.md,
-    backgroundColor: 'rgba(245, 166, 35, 0.08)',
+    backgroundColor: 'rgba(245, 166, 35, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 166, 35, 0.18)',
+    borderColor: 'rgba(245, 166, 35, 0.15)',
+    marginTop: spacing.xs,
   },
   rewardTitle: {
-    color: colors.text,
-    fontWeight: '800',
-    fontSize: 14,
+    color: colors.dark,
+    fontWeight: fontWeights.bold,
+    fontSize: fontSizes.sm,
   },
   rewardActions: {
     flexDirection: 'row',
@@ -459,14 +591,84 @@ const styles = StyleSheet.create({
   coordBox: {
     gap: spacing.sm,
   },
-  photosSection: {
-    gap: spacing.sm,
-    marginTop: spacing.sm,
+  coordsRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
   },
-  photosTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: colors.text,
-    marginBottom: 4,
+  photosGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  photoSlot: {
+    flex: 1,
+    height: 100,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(21, 26, 49, 0.12)',
+    backgroundColor: colors.bgAlt,
+    overflow: 'hidden',
+  },
+  photoSlotHasImage: {
+    borderStyle: 'solid',
+    borderColor: colors.primary,
+    borderWidth: 2,
+  },
+  photoImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  photoLabelOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(21, 26, 49, 0.7)',
+    paddingVertical: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+  },
+  photoLabelText: {
+    color: colors.white,
+    fontSize: 9,
+    fontWeight: fontWeights.semibold,
+  },
+  photoPlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 2,
+    gap: 6,
+  },
+  photoIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(244, 149, 23, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoLabelTextPlaceholder: {
+    fontSize: fontSizes.xs,
+    color: colors.textMuted,
+    fontWeight: fontWeights.semibold,
+  },
+  photosHint: {
+    fontSize: fontSizes.xs,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: -spacing.xs,
+  },
+  submitButton: {
+    marginTop: spacing.md,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 4,
   },
 });

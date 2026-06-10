@@ -1,10 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --primary: #ff9700;
-  --primary-hover: #e08500;
+  --primary: #f49517;
+  --primary-hover: #e08310;
   --secondary: #5cb874;
-  --dark-blue: #061533;
+  --dark-blue: #151a31;
   --background: #fbfbfb;
   --surface: #ffffff;
   --surface-glass: rgba(255, 255, 255, 0.95);
@@ -16,7 +16,7 @@
   --radius-md: 8px;
   --radius-lg: 12px;
   
-  --shadow-glow: 0 0 20px rgba(255, 151, 0, 0.2);
+  --shadow-glow: 0 0 20px rgba(244, 149, 23, 0.2);
   --shadow-glass: 0 4px 20px 0 rgba(0, 0, 0, 0.05);
   
   --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -100,14 +100,14 @@ a:hover {
 .btn-primary {
   background: var(--dark-blue);
   color: white;
-  box-shadow: 0 4px 10px rgba(6, 21, 51, 0.2);
+  box-shadow: 0 4px 10px rgba(21, 26, 49, 0.2);
 }
 
 .btn-primary:hover {
   background: var(--primary);
   color: white;
   transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(255, 151, 0, 0.3);
+  box-shadow: 0 6px 15px rgba(244, 149, 23, 0.3);
 }
 
 .btn-secondary {
@@ -143,7 +143,7 @@ a:hover {
 }
 
 .btn-logout-action {
-  background: #ff9700;
+  background: #f49517;
   border: 1px solid rgba(180, 35, 24, 0.18);
   box-shadow: none;
   size: 0.95rem;
@@ -151,7 +151,7 @@ a:hover {
 }
 
 .btn-logout-action:hover {
-  background: #ff9700;
+  background: #f49517;
   border: 1px solid rgba(180, 35, 24, 0.18);
   box-shadow: none;
   size: 0.95rem;
@@ -185,7 +185,7 @@ a:hover {
 .form-control:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(255, 151, 0, 0.2);
+  box-shadow: 0 0 0 2px rgba(244, 149, 23, 0.2);
   background: #ffffff;
 }
 
@@ -466,16 +466,16 @@ a:hover {
   gap: 0.85rem;
   min-height: 160px;
   padding: 1.2rem;
-  border: 1px solid rgba(6, 21, 51, 0.06);
+  border: 1px solid rgba(21, 26, 49, 0.06);
   border-radius: 18px;
   background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
-  box-shadow: 0 14px 30px rgba(6, 21, 51, 0.08);
+  box-shadow: 0 14px 30px rgba(21, 26, 49, 0.08);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .admin-nav-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(6, 21, 51, 0.14);
+  box-shadow: 0 20px 40px rgba(21, 26, 49, 0.14);
 }
 
 .admin-nav-card--disabled {
@@ -501,7 +501,7 @@ a:hover {
   align-items: center;
   justify-content: center;
   border-radius: 14px;
-  background: rgba(255, 151, 0, 0.12);
+  background: rgba(244, 149, 23, 0.12);
   color: var(--primary);
   flex: 0 0 46px;
   line-height: 0;
@@ -562,7 +562,7 @@ a:hover {
 .admin-icon--layers,
 .admin-icon--grid,
 .admin-icon--tag {
-  background: rgba(255, 151, 0, 0.14);
+  background: rgba(244, 149, 23, 0.14);
   color: #b45309;
 }
 
@@ -618,10 +618,10 @@ a:hover {
 
 .admin-table-wrap {
   overflow: auto;
-  border: 1px solid rgba(6, 21, 51, 0.08);
+  border: 1px solid rgba(21, 26, 49, 0.08);
   border-radius: 18px;
   background: #fff;
-  box-shadow: 0 10px 30px rgba(6, 21, 51, 0.06);
+  box-shadow: 0 10px 30px rgba(21, 26, 49, 0.06);
 }
 
 .admin-table {
@@ -633,7 +633,7 @@ a:hover {
 .admin-table th,
 .admin-table td {
   padding: 0.95rem 1rem;
-  border-bottom: 1px solid rgba(6, 21, 51, 0.06);
+  border-bottom: 1px solid rgba(21, 26, 49, 0.06);
   text-align: left;
   vertical-align: top;
 }
@@ -650,7 +650,7 @@ a:hover {
 }
 
 .admin-table tr:hover td {
-  background: rgba(255, 151, 0, 0.04);
+  background: rgba(244, 149, 23, 0.04);
 }
 
 .admin-table-actions {
@@ -664,7 +664,7 @@ a:hover {
   align-items: center;
   padding: 0.35rem 0.6rem;
   border-radius: 999px;
-  background: rgba(6, 21, 51, 0.06);
+  background: rgba(21, 26, 49, 0.06);
   color: #0f172a;
   font-size: 0.8rem;
   font-weight: 700;
@@ -687,7 +687,7 @@ a:hover {
 .pagination-btn {
   min-height: 36px;
   padding: 0.5rem 0.85rem;
-  border: 1px solid rgba(6, 21, 51, 0.12);
+  border: 1px solid rgba(21, 26, 49, 0.12);
   border-radius: 999px;
   background: #fff;
   color: #0f172a;
@@ -726,7 +726,7 @@ a:hover {
   justify-content: space-between;
   gap: 1rem;
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid rgba(6, 21, 51, 0.08);
+  border-bottom: 1px solid rgba(21, 26, 49, 0.08);
 }
 
 .admin-modal-kicker {
@@ -759,7 +759,7 @@ a:hover {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: linear-gradient(135deg, #061533, #ef4444);
+  background: linear-gradient(135deg, #151a31, #ef4444);
   color: #fff;
   font-size: 2rem;
   font-weight: 800;
@@ -785,7 +785,7 @@ a:hover {
   place-items: center;
   border: 0;
   border-radius: 50%;
-  background: rgba(6, 21, 51, 0.06);
+  background: rgba(21, 26, 49, 0.06);
   color: #0f172a;
   font-size: 1.6rem;
   cursor: pointer;
@@ -1307,7 +1307,7 @@ section {
 
 .contact-hero {
   padding: 72px 0;
-  background: linear-gradient(135deg, rgba(92, 184, 116, 0.14), rgba(255, 151, 0, 0.16)), #f8fbf9;
+  background: linear-gradient(135deg, rgba(92, 184, 116, 0.14), rgba(244, 149, 23, 0.16)), #f8fbf9;
 }
 
 .contact-hero-inner {
@@ -1551,9 +1551,9 @@ section {
 
 .auth-card .form-control:focus {
   outline: none;
-  border-color: #ff9700;
+  border-color: #f49517;
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(255, 151, 0, 0.1), inset 0 0 0 1px rgba(255, 151, 0, 0.2);
+  box-shadow: 0 0 0 3px rgba(244, 149, 23, 0.1), inset 0 0 0 1px rgba(244, 149, 23, 0.2);
 }
 
 .auth-card .form-control::placeholder {
@@ -1586,14 +1586,14 @@ section {
 }
 
 .password-toggle:hover {
-  color: #ff9700;
-  background: rgba(255, 151, 0, 0.08);
+  color: #f49517;
+  background: rgba(244, 149, 23, 0.08);
 }
 
 .password-toggle:focus {
   outline: none;
-  color: #ff9700;
-  box-shadow: 0 0 0 3px rgba(255, 151, 0, 0.1);
+  color: #f49517;
+  box-shadow: 0 0 0 3px rgba(244, 149, 23, 0.1);
 }
 
 .auth-error {
@@ -1621,7 +1621,7 @@ section {
 
 .auth-submit {
   width: 100%;
-  background: linear-gradient(135deg, #ff9700 0%, #ffa500 100%);
+  background: linear-gradient(135deg, #f49517 0%, #ffa500 100%);
   color: white;
   font-weight: 700;
   padding: 1rem;
@@ -1630,19 +1630,19 @@ section {
   font-size: 1.05rem;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 8px 20px rgba(255, 151, 0, 0.3);
+  box-shadow: 0 8px 20px rgba(244, 149, 23, 0.3);
   letter-spacing: 0.3px;
   text-transform: uppercase;
 }
 
 .auth-submit:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(255, 151, 0, 0.4);
+  box-shadow: 0 12px 28px rgba(244, 149, 23, 0.4);
 }
 
 .auth-submit:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: 0 4px 12px rgba(255, 151, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(244, 149, 23, 0.3);
 }
 
 .auth-submit:disabled {
@@ -1654,13 +1654,13 @@ section {
   margin-top: 2rem;
   padding-top: 1.5rem;
   text-align: center;
-  border-top: 1px solid rgba(255, 151, 0, 0.1);
+  border-top: 1px solid rgba(244, 149, 23, 0.1);
   color: #6b7280;
   font-size: 0.95rem;
 }
 
 .auth-switch a {
-  color: #ff9700;
+  color: #f49517;
   font-weight: 700;
   transition: all 0.2s ease;
   text-decoration: none;
@@ -1674,7 +1674,7 @@ section {
   left: 0;
   width: 100%;
   height: 2px;
-  background: linear-gradient(90deg, #ff9700, #ffa500);
+  background: linear-gradient(90deg, #f49517, #ffa500);
   transform: scaleX(0);
   transform-origin: right;
   transition: transform 0.3s ease;
@@ -1790,7 +1790,7 @@ section {
   min-height: 100vh;
   background:
     radial-gradient(circle at top left, rgba(92, 184, 116, 0.16), transparent 30%),
-    radial-gradient(circle at top right, rgba(255, 151, 0, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(244, 149, 23, 0.16), transparent 28%),
     linear-gradient(180deg, #fbfbfb 0%, #f8fbf9 100%);
 }
 
@@ -1804,7 +1804,7 @@ section {
   flex: 0 0 260px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.92)),
-    linear-gradient(180deg, rgba(92, 184, 116, 0.06), rgba(255, 151, 0, 0.04));
+    linear-gradient(180deg, rgba(92, 184, 116, 0.06), rgba(244, 149, 23, 0.04));
   box-shadow: 0 0 0 1px rgba(67, 89, 113, 0.08);
   border-right: 3px solid rgba(92, 184, 116, 0.16);
 }
@@ -1875,7 +1875,7 @@ section {
 .menu-link:hover,
 .menu-link.router-link-active {
   color: var(--primary);
-  background: rgba(255, 151, 0, 0.12);
+  background: rgba(244, 149, 23, 0.12);
 }
 
 .menu-icon {

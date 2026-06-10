@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, StyleSheet, Text, View, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppScreen } from '@/components/AppScreen';
 import { Card } from '@/components/Card';
 import { Input } from '@/components/Input';
 import { InlineNotice } from '@/components/InlineNotice';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { colors, spacing } from '@/constants/theme';
+import { colors, spacing, fontSizes, fontWeights, radius } from '@/constants/theme';
 import { useAuth } from '@/auth/AuthContext';
 
 export function RegisterScreen() {
@@ -28,7 +29,7 @@ export function RegisterScreen() {
     try {
       await auth.register(form);
       await auth.login(form.username.trim(), form.password);
-      router.replace('/profile');
+      router.replace('/');
     } catch (err: any) {
       setError(err?.response?.data?.detail || "Impossible de créer le compte pour le moment.");
     } finally {
@@ -37,24 +38,75 @@ export function RegisterScreen() {
   };
 
   return (
-    <AppScreen>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
-        <View style={styles.header}>
-          <Text style={styles.kicker}>Inscription</Text>
-          <Text style={styles.title}>Créer votre compte pour suivre les objets.</Text>
-        </View>
+    <AppScreen keyboardAvoiding>
+      <View style={styles.container}>
+          {/* Compact Logo + Title Header */}
+          <View style={styles.header}>
+            <View style={styles.logoRow}>
+              <Image
+                source={require('../../assets/images/logo.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
 
-        <Card>
-          <View style={styles.form}>
-            <Input label="Nom d'utilisateur" value={form.username} onChangeText={(value) => update('username', value)} />
-            <Input label="Email" value={form.email} onChangeText={(value) => update('email', value)} keyboardType="email-address" />
-            <Input label="Mot de passe" value={form.password} onChangeText={(value) => update('password', value)} secureTextEntry />
-            {error ? <InlineNotice tone="danger" message={error} /> : null}
-            <PrimaryButton label="Créer le compte" loading={loading} onPress={handleSubmit} />
-            <PrimaryButton label="J'ai déjà un compte" variant="secondary" onPress={() => router.push('/login')} />
+            <View style={styles.titleBlock}>
+              <View style={styles.iconCircle}>
+                <MaterialCommunityIcons name="account-plus-outline" size={22} color={colors.primary} />
+              </View>
+              <View>
+                <Text style={styles.title}>Inscription</Text>
+                <Text style={styles.subtitle}>Créer votre compte IZIFIND</Text>
+              </View>
+            </View>
           </View>
-        </Card>
-      </KeyboardAvoidingView>
+
+          {/* Form Card */}
+          <Card style={styles.card}>
+            <Input
+              label="Nom d'utilisateur"
+              value={form.username}
+              onChangeText={(value) => update('username', value)}
+              placeholder="Ex: jean_dupont"
+              leftIcon="account-outline"
+            />
+            <Input
+              label="Email"
+              value={form.email}
+              onChangeText={(value) => update('email', value)}
+              keyboardType="email-address"
+              placeholder="Ex: jean.dupont@email.com"
+              leftIcon="email-outline"
+            />
+            <Input
+              label="Mot de passe"
+              value={form.password}
+              onChangeText={(value) => update('password', value)}
+              secureTextEntry
+              placeholder="••••••••"
+              leftIcon="lock-outline"
+            />
+
+            {error ? <InlineNotice tone="danger" message={error} /> : null}
+
+            <PrimaryButton
+              label="Créer le compte"
+              loading={loading}
+              onPress={handleSubmit}
+              size="lg"
+              icon="account-check"
+              style={styles.submitBtn}
+            />
+          </Card>
+
+          {/* Bottom Link */}
+          <View style={styles.bottomRow}>
+            <Text style={styles.bottomText}>Déjà inscrit ?</Text>
+            <Pressable onPress={() => router.push('/login')} hitSlop={8}>
+              <Text style={styles.loginLinkText}>Se connecter</Text>
+            </Pressable>
+          </View>
+      </View>
     </AppScreen>
   );
 }
@@ -62,26 +114,75 @@ export function RegisterScreen() {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
+    justifyContent: 'center',
+  },
+  container: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.xl,
   },
   header: {
-    marginBottom: spacing.lg,
+    gap: spacing.lg,
+  },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: spacing.sm,
   },
-  kicker: {
-    color: colors.accentSoft,
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    fontSize: 12,
-    fontWeight: '800',
+  logo: {
+    width: 200,
+    height: 130,
+    borderRadius: radius.sm,
   },
-  title: {
-    color: colors.text,
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: '900',
+  brandName: {
+    fontSize: fontSizes.xl,
+    fontWeight: fontWeights.extrabold,
+    color: colors.dark,
+    letterSpacing: 1,
   },
-  form: {
+  titleBlock: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.md,
   },
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(244, 149, 23, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    color: colors.dark,
+    fontSize: fontSizes.xxl,
+    fontWeight: fontWeights.bold,
+  },
+  subtitle: {
+    color: colors.textMuted,
+    fontSize: fontSizes.sm,
+    marginTop: 1,
+  },
+  card: {
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  submitBtn: {
+    marginTop: spacing.xs,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+  },
+  bottomText: {
+    fontSize: fontSizes.sm,
+    color: colors.textMuted,
+  },
+  loginLinkText: {
+    color: colors.primary,
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.bold,
+  },
 });
-

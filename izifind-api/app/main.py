@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from slowapi.errors import RateLimitExceeded
 
 from .utils.rate_limiter import limiter
-from .routers import auth, rbac, objets, categories, references, images, modifications, commissariats, declarations, temoignages, promesse
+from .routers import auth, rbac, objets, categories, references, images, modifications, commissariats, declarations, temoignages, promesse, statistiques
 # NOTE: Toute création/modification de tables passe désormais par Alembic.
 # Ne JAMAIS utiliser Base.metadata.create_all() ici.
 
@@ -43,6 +43,7 @@ app.include_router(commissariats.router)
 app.include_router(declarations.router)
 app.include_router(temoignages.router)
 app.include_router(promesse.router)
+app.include_router(statistiques.router)
 
 # ── Servir les fichiers media (images uploadées) ──────────
 BASE_DIR = Path(__file__).resolve().parent.parent

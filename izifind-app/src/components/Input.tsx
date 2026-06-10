@@ -1,6 +1,7 @@
-import React from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
-import { colors, radius, spacing } from '@/constants/theme';
+import React, { useState, useRef } from 'react';
+import { StyleSheet, Text, TextInput, View, Pressable } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { colors, radius, spacing, fontSizes, fontWeights } from '@/constants/theme';
 
 interface Props {
   label: string;
@@ -13,6 +14,7 @@ interface Props {
   helperText?: string;
   editable?: boolean;
   readonly?: boolean;
+  leftIcon?: keyof typeof MaterialCommunityIcons.glyphMap;
 }
 
 export function Input({
@@ -26,21 +28,54 @@ export function Input({
   helperText,
   editable = true,
   readonly = false,
+  leftIcon,
 }: Props) {
+  const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<TextInput>(null);
+
+  const handlePress = () => {
+    if (editable && !readonly) {
+      inputRef.current?.focus();
+    }
+  };
+
   return (
     <View style={styles.group}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput
-        style={[styles.input, multiline ? styles.multiline : null, readonly ? styles.readonly : null]}
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor="rgba(246,243,234,0.42)"
-        multiline={multiline}
-        keyboardType={keyboardType}
-        secureTextEntry={secureTextEntry}
-        editable={editable && !readonly}
-      />
+      <Pressable 
+        onPress={handlePress}
+        style={[
+          styles.inputWrapper,
+          isFocused && styles.inputWrapperFocused,
+          readonly && styles.readonly,
+          multiline && styles.multilineWrapper
+        ]}
+      >
+        {leftIcon && (
+          <MaterialCommunityIcons 
+            name={leftIcon} 
+            size={20} 
+            color={isFocused ? colors.primary : colors.textMuted} 
+            style={styles.leftIcon}
+          />
+        )}
+        <TextInput
+          ref={inputRef}
+          style={[styles.input, multiline ? styles.multiline : null]}
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor="rgba(21, 26, 49, 0.38)"
+          multiline={multiline}
+          keyboardType={keyboardType}
+          secureTextEntry={secureTextEntry}
+          editable={editable && !readonly}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          underlineColorAndroid="transparent"
+          textAlignVertical={multiline ? 'top' : 'center'}
+        />
+      </Pressable>
       {helperText ? <Text style={styles.helper}>{helperText}</Text> : null}
     </View>
   );
@@ -49,33 +84,56 @@ export function Input({
 const styles = StyleSheet.create({
   group: {
     gap: spacing.xs,
+    marginBottom: spacing.xs,
   },
   label: {
-    color: colors.text,
-    fontSize: 13,
-    fontWeight: '600',
+    color: colors.dark,
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.semibold,
   },
-  input: {
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     minHeight: 50,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceAlt,
-    color: colors.text,
+    borderColor: 'rgba(21, 26, 49, 0.1)',
+    backgroundColor: colors.white,
     paddingHorizontal: spacing.md,
+  },
+  inputWrapperFocused: {
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  multilineWrapper: {
+    alignItems: 'flex-start',
     paddingVertical: spacing.sm,
-    fontSize: 15,
+  },
+  leftIcon: {
+    marginRight: spacing.sm,
+  },
+  input: {
+    flex: 1,
+    color: colors.dark,
+    fontSize: fontSizes.md,
+    padding: 0, // Reset default padding inside wrapper
+    minHeight: 50,
   },
   multiline: {
-    minHeight: 110,
+    minHeight: 90,
     textAlignVertical: 'top',
   },
   readonly: {
-    opacity: 0.92,
+    backgroundColor: colors.bgAlt,
+    borderColor: 'rgba(21, 26, 49, 0.05)',
   },
   helper: {
-    color: colors.muted,
-    fontSize: 12,
+    color: colors.textMuted,
+    fontSize: fontSizes.xs,
+    marginTop: 2,
   },
 });
-

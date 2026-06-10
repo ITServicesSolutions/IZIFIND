@@ -1,13 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View, ScrollView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppScreen } from '@/components/AppScreen';
-import { Card } from '@/components/Card';
-import { InlineNotice } from '@/components/InlineNotice';
+import { SearchBar } from '@/components/SearchBar';
+import { EmptyState } from '@/components/EmptyState';
 import { AnnonceCard } from '@/components/AnnonceCard';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SectionHeader } from '@/components/SectionHeader';
-import { colors, radius, spacing } from '@/constants/theme';
+import { colors, radius, spacing, fontSizes, fontWeights } from '@/constants/theme';
 import { getObjects, getStatuts } from '@/services/catalog';
 import type { Objet, Statut } from '@/types/api';
 import { normalizeText } from '@/utils/format';
@@ -27,9 +28,7 @@ export function CatalogScreen() {
     (async () => {
       try {
         const [objects, statusList] = await Promise.all([getObjects(), getStatuts()]);
-        if (!mounted) {
-          return;
-        }
+        if (!mounted) return;
         setItems(objects);
         setStatuts(statusList);
       } catch {
@@ -57,101 +56,265 @@ export function CatalogScreen() {
     });
   }, [activeStatus, items, query]);
 
-  const statusLabel = (id: number) => statuts.find((item) => item.id === id)?.name || `Statut ${id}`;
+  // Custom Header
+  const HeaderComponent = (
+    <View style={styles.header}>
+      <Pressable onPress={() => router.back()} style={styles.backButton}>
+        <MaterialCommunityIcons name="arrow-left" size={22} color={colors.dark} />
+      </Pressable>
+      <Text style={styles.headerTitle}>Catalogue</Text>
+      <View style={styles.countBadge}>
+        <Text style={styles.countBadgeText}>{filtered.length}</Text>
+      </View>
+    </View>
+  );
 
-  return (
-    <AppScreen>
-      <SectionHeader title="Catalogue" subtitle="Recherchez les objets publics par mot-clé ou statut." />
+  // Chip icon helper
+  const getChipIcon = (key: string): keyof typeof MaterialCommunityIcons.glyphMap => {
+    const lower = key.toLowerCase();
+    if (lower.includes('perdu')) return 'alert-circle-outline';
+    if (lower.includes('trouv')) return 'check-circle-outline';
+    if (lower.includes('restitu')) return 'hand-heart';
+    return 'circle-outline';
+  };
 
-      <Card>
-        <View style={styles.searchRow}>
-          <TextInput
-            style={styles.search}
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Rechercher par description ou lieu"
-            placeholderTextColor="rgba(246,243,234,0.45)"
+  // List Header with Search and Horizontal Category Chips
+  const ListHeader = () => (
+    <View style={styles.headerContainer}>
+      <View style={styles.searchWrapper}>
+        <SearchBar value={query} onChangeText={setQuery} placeholder="Rechercher par description ou lieu..." />
+      </View>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chipsScroll}
+      >
+        <Pressable
+          onPress={() => setActiveStatus('all')}
+          style={[styles.chip, activeStatus === 'all' && styles.chipActive]}
+        >
+          <MaterialCommunityIcons
+            name="view-grid-outline"
+            size={14}
+            color={activeStatus === 'all' ? colors.white : colors.dark}
           />
-        </View>
-        <View style={styles.filters}>
-          <Pressable
-            onPress={() => setActiveStatus('all')}
-            style={[styles.filterChip, activeStatus === 'all' ? styles.filterChipActive : null]}
-          >
-            <Text style={styles.filterText}>Tous</Text>
-          </Pressable>
-          {statuts.map((status) => (
+          <Text style={[styles.chipText, activeStatus === 'all' && styles.chipTextActive]}>
+            Tous
+          </Text>
+        </Pressable>
+        {statuts.map((status) => {
+          const isActive = activeStatus === status.id;
+          return (
             <Pressable
               key={status.id}
               onPress={() => setActiveStatus(status.id)}
-              style={[styles.filterChip, activeStatus === status.id ? styles.filterChipActive : null]}
+              style={[styles.chip, isActive && styles.chipActive]}
             >
-              <Text style={styles.filterText}>{status.name}</Text>
+              <MaterialCommunityIcons
+                name={getChipIcon(status.name)}
+                size={14}
+                color={isActive ? colors.white : colors.dark}
+              />
+              <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+                {status.name}
+              </Text>
             </Pressable>
-          ))}
-        </View>
-      </Card>
+          );
+        })}
+      </ScrollView>
 
-      {error ? <InlineNotice tone="danger" message={error} /> : null}
-      {loading ? <InlineNotice tone="info" message="Chargement des objets..." /> : null}
+      {/* Results count */}
+      <View style={styles.resultRow}>
+        <Text style={styles.resultLabel}>
+          {filtered.length} objet{filtered.length > 1 ? 's' : ''} trouvé{filtered.length > 1 ? 's' : ''}
+        </Text>
+        {query.length > 0 && (
+          <Pressable onPress={() => { setQuery(''); setActiveStatus('all'); }} hitSlop={8}>
+            <Text style={styles.clearText}>Réinitialiser</Text>
+          </Pressable>
+        )}
+      </View>
+    </View>
+  );
 
-      {!loading && filtered.length === 0 ? (
-        <InlineNotice tone="warning" message="Aucun objet ne correspond à cette recherche." />
-      ) : null}
-
+  return (
+    <AppScreen header={HeaderComponent} scroll={false} style={styles.screen}>
       <FlatList
-        scrollEnabled={false}
         data={filtered}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.list}
+        ListHeaderComponent={ListHeader}
+        ListEmptyComponent={
+          !loading ? (
+            <EmptyState
+              icon="search-web"
+              title="Aucun objet trouvé"
+              description="Nous n'avons trouvé aucun objet correspondant à vos critères de recherche."
+              actionLabel="Réinitialiser les filtres"
+              onAction={() => {
+                setQuery('');
+                setActiveStatus('all');
+              }}
+            />
+          ) : (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={styles.loadingText}>Chargement du catalogue...</Text>
+            </View>
+          )
+        }
         renderItem={({ item }) => (
-          <AnnonceCard objet={item} onPress={() => router.push(`/object/${item.id}`)} />
+          <View style={styles.cardWrapper}>
+            <AnnonceCard objet={item} onPress={() => router.push(`/object/${item.id}`)} />
+          </View>
         )}
       />
 
-      <PrimaryButton label="Déclarer un objet perdu" onPress={() => router.push('/declare?type=lost')} />
+      {/* Floating Bottom Button Container */}
+      <View style={styles.footer}>
+        <PrimaryButton
+          label="Déclarer un objet"
+          onPress={() => router.push('/declare?type=lost')}
+          variant="primary"
+          size="lg"
+          icon="plus-circle"
+          style={styles.floatingButton}
+        />
+      </View>
     </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  searchRow: {
-    gap: spacing.sm,
+  screen: {
+    padding: 0,
   },
-  search: {
-    minHeight: 50,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceAlt,
-    color: colors.text,
-    paddingHorizontal: spacing.md,
-  },
-  filters: {
+  header: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  filterChip: {
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: 999,
-    backgroundColor: colors.surfaceAlt,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(21, 26, 49, 0.04)',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bgAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: fontSizes.lg,
+    fontWeight: fontWeights.bold,
+    color: colors.dark,
+  },
+  countBadge: {
+    minWidth: 32,
+    height: 28,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+  },
+  countBadgeText: {
+    color: colors.white,
+    fontSize: fontSizes.xs,
+    fontWeight: fontWeights.bold,
+  },
+  headerContainer: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    gap: spacing.sm,
+  },
+  searchWrapper: {
+    marginBottom: spacing.xs,
+  },
+  chipsScroll: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingBottom: spacing.xs,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+    borderRadius: radius.pill,
+    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(21, 26, 49, 0.06)',
   },
-  filterChipActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
+  chipActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
-  filterText: {
-    color: colors.text,
-    fontSize: 12,
-    fontWeight: '700',
+  chipText: {
+    color: colors.dark,
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.semibold,
+  },
+  chipTextActive: {
+    color: colors.white,
+  },
+  resultRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: spacing.xs,
+  },
+  resultLabel: {
+    fontSize: fontSizes.xs,
+    color: colors.textMuted,
+    fontWeight: fontWeights.medium,
+  },
+  clearText: {
+    fontSize: fontSizes.xs,
+    color: colors.primary,
+    fontWeight: fontWeights.bold,
   },
   list: {
+    paddingBottom: 110,
+    gap: spacing.xs,
+  },
+  cardWrapper: {
+    paddingHorizontal: spacing.md,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: spacing.xxl * 2,
     gap: spacing.md,
-    paddingVertical: spacing.md,
+  },
+  loadingText: {
+    fontSize: fontSizes.sm,
+    color: colors.textMuted,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(250, 249, 246, 0.92)',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: 24,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(21, 26, 49, 0.04)',
+  },
+  floatingButton: {
+    width: '100%',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 4,
   },
 });

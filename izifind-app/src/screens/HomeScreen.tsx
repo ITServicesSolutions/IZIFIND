@@ -1,154 +1,371 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View, Image, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { AppScreen } from '@/components/AppScreen';
 import { Card } from '@/components/Card';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SectionHeader } from '@/components/SectionHeader';
-import { colors, radius, spacing } from '@/constants/theme';
+import { SearchBar } from '@/components/SearchBar';
+import { StatBadge } from '@/components/StatBadge';
+import { colors, radius, spacing, fontSizes, fontWeights } from '@/constants/theme';
 import { useAuth } from '@/auth/AuthContext';
-
-const stats = [
-  { label: 'Objets perdus', value: '500+' },
-  { label: 'Objets trouvés', value: '400+' },
-  { label: 'Partenaires', value: '20' },
-];
+import { getStatistics } from '@/services/catalog';
 
 export function HomeScreen() {
   const router = useRouter();
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin, user } = useAuth();
+  const [stats, setStats] = useState({ perdus: 0, trouves: 0, postes: 0 });
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await getStatistics();
+        if (mounted) setStats(data);
+      } catch (err) {
+        console.error('Failed to load statistics', err);
+      } finally {
+        if (mounted) setLoadingStats(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  const handleSearchPress = () => {
+    router.push('/catalog');
+  };
+
+  const handleNotificationPress = () => {
+    Alert.alert('Notifications', 'Vous n\'avez aucune nouvelle notification pour le moment.');
+  };
+
+  // Custom Header Component
+  const HeaderComponent = (
+    <View style={styles.header}>
+      <View style={styles.headerLeft}>
+        <Image 
+          source={require('../../assets/images/logo.png')} 
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <View style={styles.greetingContainer}>
+          <Text style={styles.greetingText}>
+            {isAuthenticated ? `Bonjour, ${user?.username}` : 'Bienvenue sur'}
+          </Text>
+          <Text style={styles.appName}>IZIFIND</Text>
+        </View>
+      </View>
+      <Pressable style={styles.notificationButton} onPress={handleNotificationPress}>
+        <MaterialCommunityIcons name="bell-outline" size={22} color={colors.dark} />
+        {/* Only show badge if there are notifications */}
+        {false && <View style={styles.notificationBadge} />}
+      </Pressable>
+    </View>
+  );
 
   return (
-    <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
+    <AppScreen header={HeaderComponent} contentContainerStyle={styles.scrollContent}>
+      {/* Hero Banner */}
       <View style={styles.hero}>
-        <Text style={styles.kicker}>IZIFIND</Text>
-        <Text style={styles.title}>Retrouver, déclarer et suivre les objets plus vite.</Text>
-        <Text style={styles.subtitle}>
-          Une app mobile pour signaler un objet perdu ou trouvé, consulter le catalogue public et accéder à l'espace
-          admin.
-        </Text>
-
-        <View style={styles.actions}>
-          <PrimaryButton label="J'ai perdu" onPress={() => router.push('/declare?type=lost')} />
-          <PrimaryButton label="J'ai trouvé" onPress={() => router.push('/declare?type=found')} variant="secondary" />
+        <View style={styles.heroContent}>
+          <Text style={styles.heroTitle}>Objets perdus ou trouvés ?</Text>
+          <Text style={styles.heroSubtitle}>Déclarez-les en moins de 2 minutes pour accélérer les recherches.</Text>
+          <PrimaryButton 
+            label="Déclarer un objet" 
+            onPress={() => router.push('/declare')} 
+            variant="secondary"
+            size="sm"
+            pill
+            icon="plus"
+            style={styles.heroButton}
+          />
+        </View>
+        <View style={styles.heroGraphic}>
+          <Text style={styles.heroEmoji}>🔍📦</Text>
         </View>
       </View>
 
-      <SectionHeader title="Accès rapides" subtitle="Les parcours les plus utilisés sont à portée de main." />
-      <View style={styles.quickGrid}>
-        <Card>
-          <Text style={styles.quickTitle}>Catalogue</Text>
-          <Text style={styles.quickText}>Consulter les objets publics et filtrer les annonces.</Text>
-          <PrimaryButton label="Ouvrir" onPress={() => router.push('/catalog')} style={styles.cardButton} />
-        </Card>
-        <Card>
-          <Text style={styles.quickTitle}>{isAuthenticated ? 'Profil' : 'Connexion'}</Text>
-          <Text style={styles.quickText}>
-            {isAuthenticated ? 'Retrouver vos informations de compte.' : 'Se connecter ou créer un compte.'}
+      {/* Search Bar (Clickable) */}
+      <Pressable onPress={handleSearchPress} style={styles.searchPressable}>
+        <View pointerEvents="none">
+          <SearchBar value="" onChangeText={() => {}} placeholder="Rechercher un objet perdu..." />
+        </View>
+      </Pressable>
+
+      {/* Quick Access Grid (2x2) */}
+      <SectionHeader title="Accès rapides" subtitle="Les raccourcis essentiels pour naviguer." />
+      <View style={styles.grid}>
+        <Pressable style={styles.gridCard} onPress={() => router.push('/catalog')}>
+          <View style={[styles.gridIconCircle, { backgroundColor: colors.pastel.orange }]}>
+            <MaterialCommunityIcons name="database-search" size={24} color={colors.primary} />
+          </View>
+          <Text style={styles.gridTitle}>Catalogue</Text>
+          <Text style={styles.gridDesc}>Consulter les objets signalés</Text>
+        </Pressable>
+
+        <Pressable style={styles.gridCard} onPress={() => router.push('/declare')}>
+          <View style={[styles.gridIconCircle, { backgroundColor: colors.pastel.purple }]}>
+            <MaterialCommunityIcons name="plus-circle-outline" size={24} color="#A882FF" />
+          </View>
+          <Text style={styles.gridTitle}>Déclarer</Text>
+          <Text style={styles.gridDesc}>Signaler un objet perdu</Text>
+        </Pressable>
+
+        <Pressable style={styles.gridCard} onPress={() => router.push('/map')}>
+          <View style={[styles.gridIconCircle, { backgroundColor: colors.pastel.blue }]}>
+            <MaterialCommunityIcons name="map-marker-radius" size={24} color="#60A5FA" />
+          </View>
+          <Text style={styles.gridTitle}>Carte</Text>
+          <Text style={styles.gridDesc}>Trouver un commissariat</Text>
+        </Pressable>
+
+        <Pressable style={styles.gridCard} onPress={() => router.push(isAuthenticated ? '/profile' : '/login')}>
+          <View style={[styles.gridIconCircle, { backgroundColor: colors.pastel.green }]}>
+            <MaterialCommunityIcons name="account-circle-outline" size={24} color="#2DD4BF" />
+          </View>
+          <Text style={styles.gridTitle}>{isAuthenticated ? 'Profil' : 'Connexion'}</Text>
+          <Text style={styles.gridDesc}>
+            {isAuthenticated ? 'Gérer votre compte' : 'Se connecter'}
           </Text>
-          <PrimaryButton
-            label={isAuthenticated ? 'Mon profil' : 'Se connecter'}
-            onPress={() => router.push(isAuthenticated ? '/profile' : '/login')}
-            style={styles.cardButton}
-          />
-        </Card>
+        </Pressable>
       </View>
 
-      {isAdmin ? (
-        <>
-          <SectionHeader title="Administration" subtitle="Accès réservé aux comptes autorisés." />
-          <Card>
-            <Text style={styles.quickTitle}>Dashboard admin</Text>
-            <Text style={styles.quickText}>Gérer les ressources métier et les objets non publics.</Text>
-            <PrimaryButton label="Accéder" onPress={() => router.push('/admin')} style={styles.cardButton} />
+      {/* Admin Section (if applicable) */}
+      {isAdmin && (
+        <View style={styles.adminSection}>
+          <SectionHeader title="Administration" subtitle="Espace réservé aux agents autorisés." />
+          <Card style={styles.adminCard}>
+            <View style={styles.adminHeader}>
+              <MaterialCommunityIcons name="security" size={24} color={colors.primary} />
+              <View style={styles.adminHeaderText}>
+                <Text style={styles.adminTitle}>Espace Administrateur</Text>
+                <Text style={styles.adminDesc}>Gérer les déclarations, les commissariats et les catégories.</Text>
+              </View>
+            </View>
+            <PrimaryButton 
+              label="Ouvrir le Dashboard" 
+              onPress={() => router.push('/admin')} 
+              variant="primary"
+              size="sm"
+              style={styles.adminButton}
+            />
           </Card>
-        </>
-      ) : null}
+        </View>
+      )}
 
-      <SectionHeader title="Statistiques" subtitle="Un aperçu simple de la plateforme." />
+      {/* Statistics Section */}
+      <SectionHeader title="Statistiques" subtitle="Activité globale de la communauté." />
       <View style={styles.statsRow}>
-        {stats.map((item) => (
-          <Card key={item.label}>
-            <Text style={styles.statValue}>{item.value}</Text>
-            <Text style={styles.statLabel}>{item.label}</Text>
-          </Card>
-        ))}
+        {loadingStats ? (
+          <ActivityIndicator color={colors.primary} style={{ flex: 1 }} />
+        ) : (
+          <>
+            <StatBadge 
+              icon="cube-outline" 
+              value={String(stats.perdus)} 
+              label="Perdus" 
+              color={colors.lost} 
+              bgColor={colors.pastel.red} 
+            />
+            <StatBadge 
+              icon="cube-send" 
+              value={String(stats.trouves)} 
+              label="Trouvés" 
+              color={colors.primary} 
+              bgColor={colors.pastel.orange} 
+            />
+            <StatBadge 
+              icon="shield-check-outline" 
+              value={String(stats.postes)} 
+              label="Postes" 
+              color="#2DD4BF"
+              bgColor={colors.pastel.green} 
+            />
+          </>
+        )}
       </View>
-    </ScrollView>
+    </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-    backgroundColor: colors.background,
+  scrollContent: {
+    paddingTop: spacing.sm,
+    gap: spacing.md,
   },
-  content: {
-    padding: spacing.lg,
-    gap: spacing.lg,
-    paddingBottom: spacing.xxl * 2,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(21, 26, 49, 0.04)',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  logo: {
+    width: 200,
+    height: 130,
+    borderRadius: radius.sm,
+  },
+  greetingContainer: {
+    justifyContent: 'center',
+  },
+  greetingText: {
+    fontSize: fontSizes.lg,
+    color: colors.textMuted,
+  },
+  appName: {
+    fontSize: fontSizes.lg,
+    fontWeight: fontWeights.bold,
+    color: colors.dark,
+    lineHeight: 18,
+  },
+  notificationButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bgAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.lost,
   },
   hero: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.primary,
     borderRadius: radius.xl,
-    padding: spacing.xl,
-    gap: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  kicker: {
-    color: colors.accentSoft,
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 1.4,
-    textTransform: 'uppercase',
-  },
-  title: {
-    color: colors.text,
-    fontSize: 30,
-    lineHeight: 36,
-    fontWeight: '900',
-  },
-  subtitle: {
-    color: colors.muted,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  actions: {
+    padding: spacing.lg,
     flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 4,
   },
-  quickGrid: {
-    gap: spacing.md,
+  heroContent: {
+    flex: 1,
+    paddingRight: spacing.sm,
   },
-  quickTitle: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '800',
-    marginBottom: spacing.xs,
+  heroTitle: {
+    color: colors.white,
+    fontSize: fontSizes.lg,
+    fontWeight: fontWeights.bold,
+    marginBottom: 4,
   },
-  quickText: {
-    color: colors.muted,
-    fontSize: 13,
-    lineHeight: 19,
+  heroSubtitle: {
+    color: 'rgba(255,255,255,0.88)',
+    fontSize: fontSizes.sm,
+    lineHeight: 18,
     marginBottom: spacing.md,
   },
-  cardButton: {
+  heroButton: {
     alignSelf: 'flex-start',
-    minWidth: 120,
+    backgroundColor: colors.white,
   },
-  statsRow: {
+  heroGraphic: {
+    width: 60,
+    height: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroEmoji: {
+    fontSize: 40,
+  },
+  searchPressable: {
+    marginBottom: spacing.xs,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing.md,
   },
-  statValue: {
-    color: colors.accentSoft,
-    fontSize: 28,
-    fontWeight: '900',
+  gridCard: {
+    width: '47%',
+    aspectRatio: 1.15,
+    backgroundColor: colors.white,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(21, 26, 49, 0.04)',
+    padding: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#151a31',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.02,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  statLabel: {
-    color: colors.text,
+  gridIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+  },
+  gridTitle: {
+    fontSize: fontSizes.md,
+    fontWeight: fontWeights.bold,
+    color: colors.dark,
+    textAlign: 'center',
+  },
+  gridDesc: {
+    fontSize: 9,
+    color: colors.textMuted,
+    textAlign: 'center',
     marginTop: 2,
-    fontSize: 13,
+  },
+  adminSection: {
+    gap: spacing.xs,
+  },
+  adminCard: {
+    gap: spacing.md,
+    padding: spacing.md,
+  },
+  adminHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  adminHeaderText: {
+    flex: 1,
+  },
+  adminTitle: {
+    fontSize: fontSizes.md,
+    fontWeight: fontWeights.bold,
+    color: colors.dark,
+  },
+  adminDesc: {
+    fontSize: fontSizes.sm,
+    color: colors.textMuted,
+    lineHeight: 16,
+    marginTop: 1,
+  },
+  adminButton: {
+    width: '100%',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
   },
 });
+
 

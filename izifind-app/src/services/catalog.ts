@@ -99,3 +99,8 @@ export async function getRoles() {
   const { data } = await http.get<Role[]>('/rbac/roles');
   return data;
 }
+
+export async function getStatistics() {
+  const { data } = await http.get<{ perdus: number; trouves: number; postes: number }>('/statistiques/');
+  return data;
+}

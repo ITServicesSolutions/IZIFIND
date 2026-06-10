@@ -1,17 +1,32 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, Image, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
+import {
+  Alert,
+  Dimensions,
+  FlatList,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppScreen } from '@/components/AppScreen';
 import { Card } from '@/components/Card';
 import { InlineNotice } from '@/components/InlineNotice';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SectionHeader } from '@/components/SectionHeader';
-import { colors, radius, spacing } from '@/constants/theme';
+import { colors, radius, spacing, fontSizes, fontWeights } from '@/constants/theme';
 import { getImages, getObjectById, getStatuts } from '@/services/catalog';
 import { createTemoignage } from '@/services/community';
 import { useAuth } from '@/auth/AuthContext';
 import type { ImageObjet, Objet, Statut } from '@/types/api';
 import { formatDate } from '@/utils/format';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const GALLERY_HEIGHT = 240;
+const GALLERY_IMAGE_WIDTH = SCREEN_WIDTH - spacing.md * 2;
 
 export function ObjectDetailScreen() {
   const router = useRouter();
@@ -23,6 +38,7 @@ export function ObjectDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState('');
   const [sending, setSending] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     let mounted = true;
@@ -54,6 +70,8 @@ export function ObjectDetailScreen() {
     () => statuts.find((item) => item.id === objet?.statut_id)?.name || `Statut ${objet?.statut_id ?? ''}`,
     [objet?.statut_id, statuts]
   );
+
+  const isLost = objet?.statut_id === 1;
 
   if (loading) {
     return (
@@ -91,93 +109,382 @@ export function ObjectDetailScreen() {
     }
   };
 
+  // Info row helper
+  const InfoRow = ({ icon, label, value }: { icon: keyof typeof MaterialCommunityIcons.glyphMap; label: string; value: string }) => (
+    <View style={styles.metaRow}>
+      <View style={styles.iconCircle}>
+        <MaterialCommunityIcons name={icon} size={18} color={colors.primary} />
+      </View>
+      <View style={styles.metaTextWrapper}>
+        <Text style={styles.metaLabel}>{label}</Text>
+        <Text style={styles.metaValue}>{value}</Text>
+      </View>
+    </View>
+  );
+
+  // Custom Header Component
+  const HeaderComponent = (
+    <View style={styles.header}>
+      <Pressable onPress={() => router.back()} style={styles.backButton}>
+        <MaterialCommunityIcons name="arrow-left" size={22} color={colors.dark} />
+      </Pressable>
+      <Text style={styles.headerTitle}>Détail de l'objet</Text>
+      <View style={{ width: 40 }} />
+    </View>
+  );
+
+  const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
+    if (viewableItems.length > 0) {
+      setActiveIndex(viewableItems[0].index ?? 0);
+    }
+  }).current;
+
   return (
-    <AppScreen>
-      <SectionHeader title="Détail de l'objet" subtitle={`Statut : ${statusLabel}`} />
-
-      <Card>
-        <Text style={styles.title}>{objet.description}</Text>
-        <Text style={styles.meta}>Date signalée: {formatDate(objet.date_action)}</Text>
-        <Text style={styles.meta}>Lieu: {objet.lieu || 'Non précisé'}</Text>
-        <Text style={styles.meta}>Contact: {objet.contact_phone || objet.contact_email || '-'}</Text>
-        <Text style={styles.meta}>Visibilité: {objet.is_public ? 'Public' : 'Privé'}</Text>
-      </Card>
-
+    <AppScreen header={HeaderComponent} contentContainerStyle={styles.scrollContent}>
+      {/* Photo Gallery with Page Dots */}
       {images.length > 0 ? (
-        <Card>
-          <Text style={styles.section}>Photos</Text>
+        <View style={styles.galleryWrapper}>
           <FlatList
             horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
             data={images}
             keyExtractor={(item) => String(item.id)}
-            contentContainerStyle={styles.imageRow}
-            renderItem={({ item }) => <Image source={{ uri: item.image_url }} style={styles.image} />}
+            onViewableItemsChanged={onViewableItemsChanged}
+            viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+            renderItem={({ item }) => (
+              <Image source={{ uri: item.image_url }} style={styles.galleryImage} />
+            )}
           />
-        </Card>
-      ) : null}
+          {/* Page indicator dots */}
+          {images.length > 1 && (
+            <View style={styles.dotsContainer}>
+              {images.map((_, i) => (
+                <View
+                  key={i}
+                  style={[styles.dot, i === activeIndex && styles.dotActive]}
+                />
+              ))}
+            </View>
+          )}
+          {/* Photo count badge */}
+          <View style={styles.photoCountBadge}>
+            <MaterialCommunityIcons name="camera-outline" size={12} color={colors.white} />
+            <Text style={styles.photoCountText}>{images.length}</Text>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.noImageCard}>
+          <View style={styles.noImageIconWrapper}>
+            <MaterialCommunityIcons
+              name={isLost ? 'cube-outline' : 'cube-send'}
+              size={44}
+              color={isLost ? colors.lost : colors.primary}
+            />
+          </View>
+          <Text style={styles.noImageText}>Aucune photo disponible</Text>
+          <Text style={styles.noImageSubtext}>Les images seront affichées ici une fois ajoutées</Text>
+        </View>
+      )}
 
+      {/* Main Info Card */}
+      <Card style={styles.infoCard}>
+        {/* Status & Reward Badges */}
+        <View style={styles.badgeRow}>
+          <View style={[styles.statusBadge, { backgroundColor: isLost ? colors.lost : colors.primary }]}>
+            <MaterialCommunityIcons
+              name={isLost ? 'alert-circle-outline' : 'check-circle-outline'}
+              size={13}
+              color={colors.white}
+            />
+            <Text style={styles.statusBadgeText}>{isLost ? 'Perdu' : 'Trouvé'}</Text>
+          </View>
+          {objet.recompense && (
+            <View style={styles.rewardBadge}>
+              <MaterialCommunityIcons name="gift-outline" size={13} color={colors.reward} />
+              <Text style={styles.rewardBadgeText}>{objet.recompense}€</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Description Title */}
+        <Text style={styles.title}>{objet.description}</Text>
+
+        <View style={styles.separator} />
+
+        {/* Structured Info Grid with Icons */}
+        <View style={styles.metaGrid}>
+          <InfoRow icon="map-marker-outline" label="Lieu signalé" value={objet.lieu || 'Non précisé'} />
+          <InfoRow icon="calendar-outline" label="Date de l'événement" value={formatDate(objet.date_action)} />
+          <InfoRow icon="phone-outline" label="Téléphone de contact" value={objet.contact_phone || 'Non communiqué'} />
+          <InfoRow icon="email-outline" label="Email de contact" value={objet.contact_email || 'Non communiqué'} />
+        </View>
+      </Card>
+
+      {/* Testimonial Section */}
+      <SectionHeader title="Témoignage" subtitle="Partagez votre retour d'expérience." />
       {canPostTestimonial ? (
-        <Card>
-          <Text style={styles.section}>Laisser un témoignage</Text>
+        <Card style={styles.testimonyCard}>
+          <View style={styles.testimonyHeader}>
+            <View style={styles.testimonyIconCircle}>
+              <MaterialCommunityIcons name="message-text-outline" size={18} color={colors.primary} />
+            </View>
+            <Text style={styles.testimonyTitle}>Votre retour</Text>
+          </View>
           <TextInput
             style={styles.textarea}
             value={note}
             onChangeText={setNote}
-            placeholder="Partagez votre retour après récupération de l'objet"
-            placeholderTextColor="rgba(246,243,234,0.45)"
+            placeholder="Écrivez un mot sur la façon dont vous avez récupéré l'objet..."
+            placeholderTextColor="rgba(21, 26, 49, 0.38)"
             multiline
           />
-          <PrimaryButton label="Envoyer" loading={sending} onPress={handleSubmitTestimony} />
+          <PrimaryButton
+            label="Envoyer le témoignage"
+            loading={sending}
+            onPress={handleSubmitTestimony}
+            icon="send"
+            size="lg"
+          />
         </Card>
       ) : (
-        <InlineNotice tone="info" message="Le témoignage est disponible quand l'objet a été retrouvé et que vous êtes connecté." />
+        <InlineNotice
+          tone="info"
+          message="Les témoignages sont activés pour les objets retrouvés une fois votre session ouverte."
+        />
       )}
-
-      <PrimaryButton label="Retour au catalogue" onPress={() => router.back()} variant="secondary" />
     </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  title: {
-    color: colors.text,
-    fontSize: 22,
-    fontWeight: '800',
-    lineHeight: 30,
+  scrollContent: {
+    paddingTop: spacing.sm,
+    gap: spacing.md,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(21, 26, 49, 0.04)',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bgAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: fontSizes.lg,
+    fontWeight: fontWeights.bold,
+    color: colors.dark,
+  },
+
+  /* Gallery */
+  galleryWrapper: {
+    height: GALLERY_HEIGHT,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    backgroundColor: '#0F172A',
+    position: 'relative',
+  },
+  galleryImage: {
+    width: GALLERY_IMAGE_WIDTH,
+    height: GALLERY_HEIGHT,
+    resizeMode: 'cover',
+  },
+  dotsContainer: {
+    position: 'absolute',
+    bottom: 12,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.35)',
+  },
+  dotActive: {
+    backgroundColor: colors.white,
+    width: 20,
+    borderRadius: 4,
+  },
+  photoCountBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+  },
+  photoCountText: {
+    color: colors.white,
+    fontSize: fontSizes.xs,
+    fontWeight: fontWeights.bold,
+  },
+
+  /* No Image Fallback */
+  noImageCard: {
+    height: 180,
+    borderRadius: radius.xl,
+    backgroundColor: 'rgba(21, 26, 49, 0.02)',
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(21, 26, 49, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+  },
+  noImageIconWrapper: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(21, 26, 49, 0.04)',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: spacing.xs,
   },
-  meta: {
-    color: colors.muted,
-    fontSize: 13,
-    lineHeight: 20,
-    marginTop: 4,
+  noImageText: {
+    fontSize: fontSizes.md,
+    color: colors.dark,
+    fontWeight: fontWeights.semibold,
   },
-  section: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '800',
-    marginBottom: spacing.sm,
+  noImageSubtext: {
+    fontSize: fontSizes.xs,
+    color: colors.textMuted,
   },
-  imageRow: {
+
+  /* Info Card */
+  infoCard: {
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    alignItems: 'center',
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+  },
+  statusBadgeText: {
+    color: colors.white,
+    fontSize: fontSizes.xs,
+    fontWeight: fontWeights.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  rewardBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(245, 166, 35, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 166, 35, 0.15)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+    gap: 4,
+  },
+  rewardBadgeText: {
+    color: colors.reward,
+    fontSize: fontSizes.xs,
+    fontWeight: fontWeights.bold,
+  },
+  title: {
+    fontSize: fontSizes.xl,
+    fontWeight: fontWeights.bold,
+    color: colors.dark,
+    lineHeight: 26,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: 'rgba(21, 26, 49, 0.04)',
+  },
+  metaGrid: {
+    gap: spacing.md,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  iconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(244, 149, 23, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  metaTextWrapper: {
+    flex: 1,
+  },
+  metaLabel: {
+    fontSize: fontSizes.xs,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  metaValue: {
+    fontSize: fontSizes.md,
+    color: colors.dark,
+    fontWeight: fontWeights.semibold,
+    marginTop: 1,
+  },
+
+  /* Testimonial */
+  testimonyCard: {
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  testimonyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.sm,
   },
-  image: {
-    width: 180,
-    height: 180,
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceAlt,
+  testimonyIconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(244, 149, 23, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  testimonyTitle: {
+    fontSize: fontSizes.md,
+    fontWeight: fontWeights.bold,
+    color: colors.dark,
   },
   textarea: {
-    minHeight: 110,
+    minHeight: 90,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceAlt,
-    color: colors.text,
+    borderColor: 'rgba(21, 26, 49, 0.08)',
+    backgroundColor: colors.bgAlt,
+    color: colors.dark,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
+    fontSize: fontSizes.md,
     textAlignVertical: 'top',
-    marginBottom: spacing.md,
+    lineHeight: 22,
   },
 });
-

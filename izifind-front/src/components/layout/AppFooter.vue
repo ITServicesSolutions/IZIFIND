@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import SocialIcon from './SocialIcon.vue'
+import logoUrl from '../../assets/images/logo.png'
 
 const currentYear = new Date().getFullYear()
 
@@ -19,12 +20,7 @@ const socialLinks = [
       <div class="footer-grid">
         <div class="footer-brand">
           <RouterLink to="/" class="logo">
-            <svg viewBox="0 0 24 24" class="logo-icon" fill="currentColor">
-              <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.5" />
-              <path d="M10 8.5a2.5 2.5 0 1 1 5 0c0 1.75-2.5 4-2.5 4s-2.5-2.25-2.5-4z" stroke="currentColor" stroke-width="1.5" fill="none" />
-              <circle cx="12.5" cy="8.5" r="0.75" />
-            </svg>
-            <span class="logo-text">Izi<span>Find</span></span>
+            <img :src="logoUrl" alt="IZIFIND" class="logo-img" />
           </RouterLink>
           <p class="brand-desc">Plateforme intelligente de déclaration et de recherche des objets perdus et trouvés au service de la communauté.</p>
           <div class="social-links">
@@ -107,13 +103,9 @@ const socialLinks = [
   text-decoration: none;
 }
 
-.logo-icon {
-  width: 32px;
-  height: 32px;
-}
-
-.logo-text span {
-  color: #FFFFFF;
+.logo-img {
+  max-height: 40px;
+  object-fit: contain;
 }
 
 .brand-desc {
