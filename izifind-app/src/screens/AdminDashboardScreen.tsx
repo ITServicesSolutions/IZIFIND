@@ -38,6 +38,10 @@ export function AdminDashboardScreen() {
   // Helper function to map resource keys to icons and colors
   const getResourceMeta = (key: string) => {
     switch (key) {
+      case 'users':
+        return { icon: 'account-group-outline' as const, color: colors.primary };
+      case 'roles':
+        return { icon: 'shield-account-outline' as const, color: '#A882FF' };
       case 'categories':
         return { icon: 'shape-outline' as const, color: colors.primary };
       case 'sous-categories':
@@ -70,7 +74,7 @@ export function AdminDashboardScreen() {
   // Custom Header
   const HeaderComponent = (
     <View style={styles.header}>
-      <Pressable onPress={() => router.replace('/')} style={styles.backButton}>
+      <Pressable onPress={() => router.back()} style={styles.backButton}>
         <MaterialCommunityIcons name="arrow-left" size={24} color={colors.dark} />
       </Pressable>
       <Text style={styles.headerTitle}>Administration</Text>

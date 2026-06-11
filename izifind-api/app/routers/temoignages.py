@@ -8,10 +8,10 @@ from ..models.auth import User
 from ..schemas.objets import TemoignageCreate, TemoignageUpdate, Temoignage as TemoignageSchema
 from ..dependencies import get_current_user
 
-router = APIRouter(prefix="/api/temoignages", tags=["Témoignages"])
+router = APIRouter(prefix="/api", tags=["Témoignages"])
 
 @router.get(
-    "/",
+    "/temoignages",
     response_model=List[TemoignageSchema],
     summary="Lister les témoignages",
     description="Renvoie tous les témoignages laissés par les utilisateurs."
@@ -20,7 +20,7 @@ def get_temoignages(db: Session = Depends(get_db)):
     return db.query(Temoignage).all()
 
 @router.post(
-    "/",
+    "/temoignages",
     response_model=TemoignageSchema,
     status_code=status.HTTP_201_CREATED,
     summary="Soumettre un témoignage",
@@ -56,7 +56,7 @@ def create_temoignage(
 # ═══════════════════════════════════════════════════════════
 
 @router.get(
-    "/{temoignage_id}",
+    "/temoignages/{temoignage_id}",
     response_model=TemoignageSchema,
     summary="Détail d'un témoignage",
     description="Récupère les détails d'un témoignage."
@@ -72,7 +72,7 @@ def get_temoignage(
 
 
 @router.put(
-    "/{temoignage_id}",
+    "/temoignages/{temoignage_id}",
     response_model=TemoignageSchema,
     summary="Modifier un témoignage",
     description="[AUTH REQUISE] Modifie un témoignage (auteur ou admin)."
@@ -102,7 +102,7 @@ def update_temoignage(
 
 
 @router.patch(
-    "/{temoignage_id}",
+    "/temoignages/{temoignage_id}",
     response_model=TemoignageSchema,
     summary="Modifier partiellement un témoignage",
     description="[AUTH REQUISE] Modifie partiellement un témoignage."
@@ -131,10 +131,10 @@ def patch_temoignage(
     db.commit()
     db.refresh(temoignage)
     return temoignage
-
+ 
 
 @router.delete(
-    "/{temoignage_id}",
+    "/temoignages/{temoignage_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Supprimer un témoignage",
     description="[AUTH REQUISE] Supprime un témoignage (auteur ou admin)."

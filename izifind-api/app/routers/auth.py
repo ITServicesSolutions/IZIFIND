@@ -9,7 +9,7 @@ import logging
 
 from ..database import get_db
 from ..models.auth import User, PasswordResetToken
-from ..schemas.auth import UserCreate, User as UserSchema, Token
+from ..schemas.auth import UserCreate, User as UserSchema, Token, UserUpdate, ChangePassword, ForgotPasswordRequest, ResetPasswordRequest
 from ..security import (
     get_password_hash, verify_password, create_access_token,
     generate_reset_token, verify_reset_token
@@ -97,14 +97,15 @@ def read_users_me(current_user: User = Depends(get_current_user)):
 @limiter.limit("3/minute")
 def forgot_password(
     request: Request,
-    email: str,
+    payload: ForgotPasswordRequest,
     db: Session = Depends(get_db)
 ):
     """
     Endpoint pour demander la réinitialisation du mot de passe.
     Valide l'email et envoie un lien de reset si l'account existe.
     """
-    # Validation email
+    email = payload.email
+    # Validation email (Pydantic already validates it's an email, but let's keep extra validation just in case
     try:
         validate_email(email)
     except EmailNotValidError:
@@ -169,13 +170,14 @@ def forgot_password(
     description="[ANONYME] Réinitialise le mot de passe en utilisant le token envoyé par email."
 )
 def reset_password(
-    token: str,
-    new_password: str,
+    payload: ResetPasswordRequest,
     db: Session = Depends(get_db)
 ):
     """
     Endpoint pour réinitialiser le mot de passe avec le token reçu par email.
     """
+    token = payload.token
+    new_password = payload.new_password
     # Validation de la nouvelle password
     if len(new_password) < 8:
         raise HTTPException(
@@ -186,7 +188,16 @@ def reset_password(
     # Trouver le token
     reset_token_record = db.query(PasswordResetToken).filter(
         PasswordResetToken.is_used == False
-    ).first()
+    ).all()
+    
+    # Vérifier chaque token non utilisé
+    valid_token = None
+    for record in reset_token_record:
+        if verify_reset_token(token, record.token):
+            valid_token = record
+            break
+    
+    reset_token_record = valid_token
     
     if not reset_token_record:
         raise HTTPException(
@@ -227,6 +238,44 @@ def reset_password(
     }
 
 
+@router.put(
+    "/me",
+    response_model=UserSchema,
+    summary="Modifier son propre profil",
+    description="[AUTH REQUISE] Permet à un utilisateur de modifier ses propres informations (sans changer son rôle/permissions)."
+)
+def update_me(
+    user_in: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Endpoint pour que l'utilisateur modifie son propre profil.
+    Il ne peut pas modifier son rôle, ses permissions ou son statut superutilisateur.
+    """
+    # Mettre à jour les champs fournis
+    if user_in.username is not None:
+        # Vérifier que le nom d'utilisateur n'est pas déjà utilisé
+        existing_user = db.query(User).filter(User.username == user_in.username, User.id != current_user.id).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Username already taken")
+        current_user.username = user_in.username
+    
+    if user_in.email is not None:
+        # Vérifier que l'email n'est pas déjà utilisé
+        existing_user = db.query(User).filter(User.email == user_in.email, User.id != current_user.id).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email already taken")
+        current_user.email = user_in.email
+    
+    if user_in.commissariat_id is not None:
+        current_user.commissariat_id = user_in.commissariat_id
+    
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
 @router.post(
     "/change-password",
     summary="Changer le mot de passe (utilisateur connecté)",
@@ -235,8 +284,7 @@ def reset_password(
 @limiter.limit("5/minute")
 def change_password(
     request: Request,
-    current_password: str,
-    new_password: str,
+    password_data: ChangePassword,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -245,20 +293,20 @@ def change_password(
     Demande le mot de passe actuel pour validation.
     """
     # Validation de la nouvelle password
-    if len(new_password) < 8:
+    if len(password_data.new_password) < 8:
         raise HTTPException(
             status_code=400,
             detail="Password must be at least 8 characters long"
         )
     
-    if current_password == new_password:
+    if password_data.old_password == password_data.new_password:
         raise HTTPException(
             status_code=400,
             detail="New password must be different from current password"
         )
     
     # Vérifier le mot de passe actuel
-    if not verify_password(current_password, current_user.hashed_password):
+    if not verify_password(password_data.old_password, current_user.hashed_password):
         logger.warning(f"Failed password change attempt for user {current_user.username}")
         raise HTTPException(
             status_code=401,
@@ -266,7 +314,7 @@ def change_password(
         )
     
     # Mettre à jour le mot de passe
-    current_user.hashed_password = get_password_hash(new_password)
+    current_user.hashed_password = get_password_hash(password_data.new_password)
     db.add(current_user)
     db.commit()
     

@@ -8,10 +8,8 @@ export type AdminResourceKey =
   | 'objets'
   | 'images'
   | 'modifications'
-  | 'promesses'
-  | 'temoignages'
-  | 'commissariats'
   | 'permissions'
+  | 'roles'
 
 export interface AdminResourceConfig {
   key: AdminResourceKey
@@ -26,6 +24,17 @@ export interface AdminResourceConfig {
 }
 
 export const ADMIN_MENU_RESOURCES: AdminResourceConfig[] = [
+  {
+    key: 'roles',
+    label: 'Roles',
+    subtitle: 'Gestion des rôles et permissions.',
+    path: '/admin/roles',
+    endpoint: '/rbac/roles',
+    icon: 'shield',
+    fields: ['id', 'name', 'description'],
+    deletable: true,
+    deletePath: (id) => `/rbac/roles/${id}`,
+  },
   {
     key: 'categories',
     label: 'Categories',
@@ -124,39 +133,6 @@ export const ADMIN_MENU_RESOURCES: AdminResourceConfig[] = [
     fields: ['id', 'objet_id', 'change', 'confirm', 'date'],
     deletable: true,
     deletePath: (id) => `/modifications/${id}`,
-  },
-  {
-    key: 'promesses',
-    label: 'Promesses',
-    subtitle: 'Récompenses associées aux objets perdus.',
-    path: '/admin/promesses',
-    endpoint: '/promesses',
-    icon: 'coin',
-    fields: ['id', 'objet_id', 'montant', 'pourcentage_frais'],
-    deletable: true,
-    deletePath: (id) => `/promesses/${id}`,
-  },
-  {
-    key: 'temoignages',
-    label: 'Temoignages',
-    subtitle: 'Retours après récupération.',
-    path: '/admin/temoignages',
-    endpoint: '/temoignages',
-    icon: 'message',
-    fields: ['id', 'objet_id', 'user_id', 'contenu', 'date'],
-    deletable: true,
-    deletePath: (id) => `/temoignages/${id}`,
-  },
-  {
-    key: 'commissariats',
-    label: 'Commissariats',
-    subtitle: 'Points physiques de prise en charge.',
-    path: '/admin/commissariats',
-    endpoint: '/commissariats',
-    icon: 'map',
-    fields: ['id', 'name', 'adresse', 'latitude', 'longitude'],
-    deletable: true,
-    deletePath: (id) => `/commissariats/${id}`,
   },
   {
     key: 'permissions',

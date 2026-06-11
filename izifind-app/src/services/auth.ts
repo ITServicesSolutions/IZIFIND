@@ -31,3 +31,23 @@ export async function fetchMe() {
   return data;
 }
 
+export async function forgotPasswordRequest(email: string) {
+  const { data } = await http.post('/auth/forgot-password', { email });
+  return data;
+}
+
+export async function resetPasswordRequest(token: string, newPassword: string) {
+  const { data } = await http.post('/auth/reset-password', { token, new_password: newPassword });
+  return data;
+}
+
+export async function updateProfileRequest(payload: Partial<User>) {
+  const { data } = await http.put<User>('/auth/me', payload);
+  return data;
+}
+
+export async function changePasswordRequest(oldPassword: string, newPassword: string) {
+  const { data } = await http.post('/auth/change-password', { old_password: oldPassword, new_password: newPassword });
+  return data;
+}
+

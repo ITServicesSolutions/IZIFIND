@@ -68,6 +68,8 @@ export default function TabLayout() {
           href: auth.isAdmin ? undefined : null,
         }}
       />
+      <Tabs.Screen name="edit-profile" options={{ href: null }} />
+      <Tabs.Screen name="change-password" options={{ href: null }} />
     </Tabs>
   );
 }

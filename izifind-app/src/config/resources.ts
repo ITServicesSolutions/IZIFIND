@@ -2,6 +2,37 @@ import type { AdminResourceConfig } from '@/types/api';
 
 export const ADMIN_RESOURCES: AdminResourceConfig[] = [
   {
+    key: 'users',
+    label: 'Utilisateurs',
+    subtitle: 'Gestion des comptes utilisateurs',
+    endpoint: '/rbac/users',
+    creatable: false,
+    editable: true,
+    deletable: true,
+    fields: [
+      { name: 'username', label: 'Nom d\'utilisateur', type: 'text', required: true },
+      { name: 'email', label: 'Email', type: 'text', required: true },
+      { name: 'is_active', label: 'Actif', type: 'boolean' },
+      { name: 'is_superuser', label: 'Super utilisateur', type: 'boolean' },
+      { name: 'commissariat_id', label: 'Commissariat', type: 'select', optionsKey: 'commissariats' },
+    ],
+    deletePath: (id) => `/rbac/users/${id}`,
+  },
+  {
+    key: 'roles',
+    label: 'Roles',
+    subtitle: 'Gestion des rôles et permissions',
+    endpoint: '/rbac/roles',
+    creatable: true,
+    editable: true,
+    deletable: true,
+    fields: [
+      { name: 'name', label: 'Nom', type: 'text', required: true },
+      { name: 'description', label: 'Description', type: 'textarea' },
+    ],
+    deletePath: (id) => `/rbac/roles/${id}`,
+  },
+  {
     key: 'categories',
     label: 'Categories',
     subtitle: 'Classement principal des objets',

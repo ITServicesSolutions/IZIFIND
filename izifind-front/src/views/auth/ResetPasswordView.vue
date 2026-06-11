@@ -1,91 +1,82 @@
 <template>
   <div class="auth-page">
-    <!-- Decorative left panel -->
     <div class="auth-panel-left">
       <div class="panel-overlay"></div>
       <div class="panel-content">
         <RouterLink to="/" class="panel-logo">
           <img :src="logoUrl" alt="IZIFIND" />
         </RouterLink>
-        <h1>Bon retour parmi nous</h1>
-        <p>Connectez-vous pour retrouver vos objets, suivre vos signalements et accéder à votre espace personnel.</p>
-        <div class="panel-features">
-          <div class="feature-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-            <span>Suivi en temps réel</span>
-          </div>
-          <div class="feature-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span>Connexion sécurisée</span>
-          </div>
-          <div class="feature-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <span>Communauté active</span>
-          </div>
-        </div>
+        <h1>Réinitialisez votre mot de passe</h1>
+        <p>Choisissez un nouveau mot de passe sécurisé.</p>
       </div>
-      <!-- Animated shapes -->
-      <div class="floating-shape shape-1"></div>
-      <div class="floating-shape shape-2"></div>
-      <div class="floating-shape shape-3"></div>
     </div>
 
-    <!-- Right panel with form -->
     <div class="auth-panel-right">
       <div class="auth-card">
         <div class="auth-card-header">
           <RouterLink to="/" class="mobile-logo">
             <img :src="logoUrl" alt="IZIFIND" />
           </RouterLink>
-          <h2>Connexion</h2>
-          <p class="auth-subtitle">Entrez vos identifiants pour continuer</p>
+          <h2>Réinitialiser le mot de passe</h2>
+          <p class="auth-subtitle">Entrez votre nouveau mot de passe</p>
         </div>
 
-        <form @submit.prevent="handleLogin" class="auth-form">
+        <form @submit.prevent="handleResetPassword" class="auth-form">
           <div class="form-group">
-            <label class="form-label" for="login-username">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              Nom d'utilisateur
-            </label>
-            <input
-              id="login-username"
-              type="text"
-              v-model="username"
-              class="form-control"
-              placeholder="Entrez votre nom d'utilisateur"
-              required
-              autocomplete="username"
-            />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="login-password">
+            <label class="form-label" for="new-password">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              Mot de passe
+              Nouveau mot de passe
             </label>
             <div class="password-wrapper">
               <input
-                id="login-password"
+                id="new-password"
                 :type="showPassword ? 'text' : 'password'"
-                v-model="password"
+                v-model="newPassword"
                 class="form-control"
-                placeholder="Entrez votre mot de passe"
+                placeholder="Entrez votre nouveau mot de passe"
                 required
-                autocomplete="current-password"
+                autocomplete="new-password"
+                minlength="8"
               />
               <button type="button" class="password-toggle" @click="showPassword = !showPassword" aria-label="Afficher/Masquer le mot de passe">
                 <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <path d="M1 12s4-8 11-8 11 8-4 8-11 8-11-8-11-8z" />
                   <circle cx="12" cy="12" r="3" />
                 </svg>
                 <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0-11 8-11-8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
                   <line x1="1" y1="1" x2="23" y2="23" />
                 </svg>
               </button>
             </div>
-            <div class="forgot-password">
-              <RouterLink to="/forgot-password" class="forgot-link">Mot de passe oublié ?</RouterLink>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="confirm-password">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Confirmer le nouveau mot de passe
+            </label>
+            <div class="password-wrapper">
+              <input
+                id="confirm-password"
+                :type="showConfirmPassword ? 'text' : 'password'"
+                v-model="confirmPassword"
+                class="form-control"
+                placeholder="Confirmez votre nouveau mot de passe"
+                required
+                autocomplete="new-password"
+                minlength="8"
+              />
+              <button type="button" class="password-toggle" @click="showConfirmPassword = !showConfirmPassword" aria-label="Afficher/Masquer la confirmation">
+                <svg v-if="!showConfirmPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0-11 8-11-8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -96,9 +87,17 @@
             </div>
           </transition>
 
+          <div v-if="success" class="auth-success">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            {{ success }}
+          </div>
+
           <button type="submit" class="btn-submit" :disabled="loading">
             <span v-if="loading" class="spinner"></span>
-            <span v-else>Se connecter</span>
+            <span v-else>Réinitialiser le mot de passe</span>
           </button>
         </form>
 
@@ -107,8 +106,8 @@
         </div>
 
         <div class="auth-switch">
-          <span>Pas encore de compte ?</span>
-          <RouterLink to="/register" class="switch-link">Créer un compte</RouterLink>
+          <span>Vous vous souvenez de votre mot de passe ?</span>
+          <RouterLink to="/login" class="switch-link">Se connecter</RouterLink>
         </div>
       </div>
     </div>
@@ -117,28 +116,43 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import logoUrl from '../../assets/images/logo.png'
-import { useAuthStore } from '../../stores/auth'
+import api from '../../services/api'
 
-const username = ref('')
-const password = ref('')
-const error = ref('')
-const loading = ref(false)
-const showPassword = ref(false)
-
-const authStore = useAuthStore()
+const route = useRoute()
 const router = useRouter()
 
-const handleLogin = async () => {
-  error.value = ''
-  loading.value = true
+const newPassword = ref('')
+const confirmPassword = ref('')
+const error = ref('')
+const loading = ref(false)
+const success = ref('')
+const showPassword = ref(false)
+const showConfirmPassword = ref(false)
 
+const handleResetPassword = async () => {
+  error.value = ''
+  success.value = ''
+
+  if (newPassword.value !== confirmPassword.value) {
+    error.value = 'Les mots de passe ne correspondent pas'
+    return
+  }
+
+  loading.value = true
   try {
-    await authStore.login(username.value, password.value)
-    router.push(authStore.isAdmin ? '/admin/dashboard' : '/profile')
+    const params = new URLSearchParams()
+    const token = route.query.token as string
+    params.append('token', token)
+    params.append('new_password', newPassword.value)
+    await api.post('/auth/reset-password?' + params.toString())
+    success.value = 'Mot de passe réinitialisé avec succès ! Redirection vers la page de connexion...'
+    setTimeout(() => {
+      router.push('/login')
+    }, 2000)
   } catch (err: any) {
-    error.value = err.response?.data?.detail || 'Identifiants incorrects'
+    error.value = err.response?.data?.detail || 'Erreur lors de la réinitialisation du mot de passe'
   } finally {
     loading.value = false
   }
@@ -146,14 +160,12 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-/* ─── Page Layout ─── */
 .auth-page {
   display: flex;
   min-height: 100vh;
   background-color: #faf9f6;
 }
 
-/* ─── Left Decorative Panel ─── */
 .auth-panel-left {
   flex: 0 0 46%;
   position: relative;
@@ -162,7 +174,6 @@ const handleLogin = async () => {
   align-items: center;
   justify-content: center;
   padding: 3rem;
-  overflow: hidden;
 }
 
 .panel-overlay {
@@ -185,11 +196,6 @@ const handleLogin = async () => {
   height: 52px;
   filter: brightness(0) invert(1);
   margin-bottom: 2.5rem;
-  transition: transform 0.3s ease;
-}
-
-.panel-logo:hover img {
-  transform: scale(1.05);
 }
 
 .panel-content h1 {
@@ -205,83 +211,8 @@ const handleLogin = async () => {
   font-size: 1.05rem;
   line-height: 1.7;
   color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 2.5rem;
 }
 
-.panel-features {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.feature-item {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.feature-item svg {
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-  color: #f49517;
-}
-
-/* Floating shapes */
-.floating-shape {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0.08;
-  pointer-events: none;
-}
-
-.shape-1 {
-  width: 300px;
-  height: 300px;
-  background: #f49517;
-  top: -80px;
-  right: -60px;
-  animation: float-1 8s ease-in-out infinite;
-}
-
-.shape-2 {
-  width: 200px;
-  height: 200px;
-  background: #ffffff;
-  bottom: 10%;
-  left: -40px;
-  animation: float-2 10s ease-in-out infinite;
-}
-
-.shape-3 {
-  width: 120px;
-  height: 120px;
-  background: #f49517;
-  bottom: -30px;
-  right: 25%;
-  animation: float-3 12s ease-in-out infinite;
-}
-
-@keyframes float-1 {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  50% { transform: translate(-20px, 30px) rotate(15deg); }
-}
-
-@keyframes float-2 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(15px, -25px) scale(1.1); }
-}
-
-@keyframes float-3 {
-  0%, 100% { transform: translate(0, 0); }
-  33% { transform: translate(20px, -15px); }
-  66% { transform: translate(-10px, 10px); }
-}
-
-/* ─── Right Panel (Form) ─── */
 .auth-panel-right {
   flex: 1;
   display: flex;
@@ -307,7 +238,6 @@ const handleLogin = async () => {
   }
 }
 
-/* ─── Card Header ─── */
 .auth-card-header {
   margin-bottom: 2rem;
 }
@@ -334,7 +264,6 @@ const handleLogin = async () => {
   font-size: 1rem;
 }
 
-/* ─── Form Styles ─── */
 .auth-form {
   display: flex;
   flex-direction: column;
@@ -385,7 +314,6 @@ const handleLogin = async () => {
   background: #ffffff;
 }
 
-/* Password toggle */
 .password-wrapper {
   position: relative;
 }
@@ -416,39 +344,32 @@ const handleLogin = async () => {
   background: rgba(244, 149, 23, 0.08);
 }
 
-.forgot-password {
-  text-align: right;
-  margin-top: 0.5rem;
-}
-
-.forgot-link {
-  color: #f49517;
-  font-weight: 600;
-  text-decoration: none;
-  font-size: 0.9rem;
-  transition: color 0.2s ease;
-}
-
-.forgot-link:hover {
-  color: #e08310;
-}
-
-/* Error message */
-.auth-error {
+.auth-error,
+.auth-success {
   display: flex;
   align-items: center;
   gap: 0.6rem;
   padding: 0.875rem 1rem;
-  color: #dc2626;
-  background: rgba(220, 38, 38, 0.06);
-  border: 1px solid rgba(220, 38, 38, 0.15);
   border-radius: 10px;
   font-weight: 500;
   font-size: 0.9rem;
   animation: slideDown 0.3s ease;
 }
 
-.auth-error svg {
+.auth-error {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.06);
+  border: 1px solid rgba(220, 38, 38, 0.15);
+}
+
+.auth-success {
+  color: #16a34a;
+  background: rgba(22, 163, 74, 0.06);
+  border: 1px solid rgba(22, 163, 74, 0.15);
+}
+
+.auth-error svg,
+.auth-success svg {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
@@ -459,7 +380,6 @@ const handleLogin = async () => {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Submit button */
 .btn-submit {
   width: 100%;
   padding: 1rem;
@@ -495,7 +415,6 @@ const handleLogin = async () => {
   cursor: not-allowed;
 }
 
-/* Loading spinner */
 .spinner {
   width: 22px;
   height: 22px;
@@ -509,7 +428,6 @@ const handleLogin = async () => {
   to { transform: rotate(360deg); }
 }
 
-/* ─── Divider ─── */
 .auth-divider {
   display: flex;
   align-items: center;
@@ -533,7 +451,6 @@ const handleLogin = async () => {
   letter-spacing: 1px;
 }
 
-/* ─── Switch Link ─── */
 .auth-switch {
   text-align: center;
   color: #6b7280;
@@ -571,7 +488,6 @@ const handleLogin = async () => {
   transform-origin: left;
 }
 
-/* ─── Responsive ─── */
 @media (max-width: 991px) {
   .auth-panel-left {
     flex: 0 0 40%;

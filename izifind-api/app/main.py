@@ -25,7 +25,15 @@ app.add_exception_handler(RateLimitExceeded, lambda request, exc: HTTPException(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://192.168.1.114:5173",
+        "http://192.168.1.114:8000",
+        "exp://192.168.1.114:8081",
+        "http://192.168.1.100:5173",
+        "http://192.168.1.100:8000",
+        "http://192.168.1.100:8081"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

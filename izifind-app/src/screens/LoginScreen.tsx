@@ -83,6 +83,10 @@ export function LoginScreen() {
               icon="login"
               style={styles.submitBtn}
             />
+            
+            <Pressable onPress={() => router.push('/forgot-password')} hitSlop={8} style={styles.forgotPasswordContainer}>
+              <Text style={styles.forgotPasswordText}>Mot de passe oublié ?</Text>
+            </Pressable>
           </Card>
 
           {/* Bottom Link */}
@@ -170,5 +174,14 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: fontSizes.sm,
     fontWeight: fontWeights.bold,
+  },
+  forgotPasswordContainer: {
+    alignSelf: 'center',
+    marginTop: spacing.md,
+  },
+  forgotPasswordText: {
+    color: colors.textMuted,
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.semibold,
   },
 });

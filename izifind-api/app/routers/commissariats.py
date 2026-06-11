@@ -7,7 +7,7 @@ from ..models.objets import Commissariat, Objet, Statut
 from ..schemas.objets import CommissariatCreate, CommissariatUpdate, Commissariat as CommissariatSchema, Objet as ObjetSchema
 from ..dependencies import get_current_user, RoleChecker
 
-router = APIRouter(prefix="/api/commissariats", tags=["Commissariats"])
+router = APIRouter(prefix="/api", tags=["Commissariats"])
 
 # Roles requirements
 require_admin = Depends(RoleChecker(["admin"]))
@@ -15,7 +15,7 @@ require_commissaire = Depends(RoleChecker(["commissaire", "admin"]))
 
 
 @router.get(
-    "/",
+    "/commissariats",
     response_model=List[CommissariatSchema],
     summary="Lister les commissariats",
     description="Renvoie tous les commissariats enregistrés."
@@ -25,7 +25,7 @@ def get_commissariats(db: Session = Depends(get_db)):
 
 
 @router.post(
-    "/",
+    "/commissariats",
     response_model=CommissariatSchema,
     status_code=status.HTTP_201_CREATED,
     summary="Créer un commissariat",
@@ -41,10 +41,10 @@ def create_commissariat(
     db.commit()
     db.refresh(new_comm)
     return new_comm
-
+ 
 
 @router.get(
-    "/{comm_id}",
+    "/commissariats/{comm_id}",
     response_model=CommissariatSchema,
     summary="Détail d'un commissariat"
 )
@@ -56,7 +56,7 @@ def get_commissariat(comm_id: int, db: Session = Depends(get_db)):
 
 
 @router.put(
-    "/{comm_id}",
+    "/commissariats/{comm_id}",
     response_model=CommissariatSchema,
     summary="Modifier un commissariat",
     description="[ADMIN] Modifie un commissariat."
@@ -78,7 +78,7 @@ def update_commissariat(
 
 
 @router.delete(
-    "/{comm_id}",
+    "/commissariats/{comm_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Supprimer un commissariat",
     description="[ADMIN] Supprime un commissariat."
@@ -97,7 +97,7 @@ def delete_commissariat(
 
 
 @router.put(
-    "/objets/{objet_id}/valider",
+    "/commissariats/objets/{objet_id}/valider",
     response_model=ObjetSchema,
     summary="Valider un objet trouvé",
     description="[COMMISSAIRE] Valide qu'un objet transmis est bien au commissariat. Passe l'objet en statut TROUVE et le rend public."

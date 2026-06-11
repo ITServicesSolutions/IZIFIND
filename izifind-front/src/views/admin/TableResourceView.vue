@@ -125,9 +125,9 @@ onMounted(loadItems)
 
       <div v-if="feedback" class="notice danger">{{ feedback }}</div>
       <div v-if="loading" class="notice">Chargement...</div>
-      <div v-else class="admin-table-wrap">
+      <div v-else class="admin-table-wrap" style="max-height: 60vh; overflow-y: auto;">
         <table class="admin-table">
-          <thead>
+          <thead style="position: sticky; top: 0; background-color: var(--color-surface); z-index: 1;">
             <tr>
               <th v-for="column in columns" :key="column">{{ column }}</th>
               <th>Actions</th>

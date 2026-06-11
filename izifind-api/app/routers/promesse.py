@@ -8,11 +8,11 @@ from ..models.auth import User
 from ..schemas.objets import PromesseCreate, PromesseUpdate, Promesse as PromesseSchema
 from ..dependencies import get_current_user
 
-router = APIRouter(prefix="/api/promesses", tags=["Promesses"])
+router = APIRouter(prefix="/api", tags=["Promesses"])
 
 
 @router.get(
-    "/",
+    "/promesses",
     response_model=List[PromesseSchema],
     summary="Lister les promesses",
     description="Renvoie toutes les promesses de récompense enregistrées."
@@ -26,7 +26,7 @@ def get_promesses(
 
 
 @router.post(
-    "/",
+    "/promesses",
     response_model=PromesseSchema,
     status_code=status.HTTP_201_CREATED,
     summary="Créer une promesse",
@@ -63,7 +63,7 @@ def create_promesse(
 
 
 @router.get(
-    "/{promesse_id}",
+    "/promesses/{promesse_id}",
     response_model=PromesseSchema,
     summary="Détail d'une promesse",
     description="Récupère les détails d'une promesse de récompense."
@@ -79,7 +79,7 @@ def get_promesse(
 
 
 @router.put(
-    "/{promesse_id}",
+    "/promesses/{promesse_id}",
     response_model=PromesseSchema,
     summary="Modifier une promesse",
     description="[AUTH REQUISE] Modifie une promesse (propriétaire de l'objet ou admin)."
@@ -109,7 +109,7 @@ def update_promesse(
 
 
 @router.patch(
-    "/{promesse_id}",
+    "/promesses/{promesse_id}",
     response_model=PromesseSchema,
     summary="Modifier partiellement une promesse",
     description="[AUTH REQUISE] Modifie partiellement une promesse."
@@ -139,7 +139,7 @@ def patch_promesse(
 
 
 @router.delete(
-    "/{promesse_id}",
+    "/promesses/{promesse_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Supprimer une promesse",
     description="[AUTH REQUISE] Supprime une promesse de récompense."

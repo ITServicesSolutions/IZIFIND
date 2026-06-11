@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { fetchMe, loginRequest, registerRequest } from '@/services/auth';
+import { fetchMe, loginRequest, registerRequest, forgotPasswordRequest, resetPasswordRequest, updateProfileRequest, changePasswordRequest } from '@/services/auth';
 import { setAuthToken } from '@/services/http';
 import type { RegisterPayload } from '@/services/auth';
 import type { User } from '@/types/api';
@@ -17,6 +17,10 @@ interface AuthContextValue {
   register: (payload: RegisterPayload) => Promise<void>;
   refreshUser: () => Promise<void>;
   logout: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (token: string, newPassword: string) => Promise<void>;
+  updateProfile: (payload: Partial<User>) => Promise<void>;
+  changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -106,6 +110,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await persistToken(null);
   };
 
+  const forgotPassword = async (email: string) => {
+    await forgotPasswordRequest(email);
+  };
+
+  const resetPassword = async (token: string, newPassword: string) => {
+    await resetPasswordRequest(token, newPassword);
+  };
+
+  const updateProfile = async (payload: Partial<User>) => {
+    const updatedUser = await updateProfileRequest(payload);
+    setUser(updatedUser);
+  };
+
+  const changePassword = async (oldPassword: string, newPassword: string) => {
+    await changePasswordRequest(oldPassword, newPassword);
+  };
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -117,6 +138,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       register,
       refreshUser,
       logout,
+      forgotPassword,
+      resetPassword,
+      updateProfile,
+      changePassword,
     }),
     [isReady, token, user]
   );

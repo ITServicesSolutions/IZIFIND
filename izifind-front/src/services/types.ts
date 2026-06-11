@@ -18,6 +18,7 @@ export interface User {
   is_active: boolean
   is_superuser: boolean
   roles: Role[]
+  commissariat?: Commissariat | null
 }
 
 export interface Category {

@@ -48,6 +48,7 @@ export function AdminResourceScreen() {
   const baseEndpoint = useMemo(() => (config ? config.endpoint.split('?')[0] : ''), [config]);
   const [collections, setCollections] = useState<ResourceCollections | null>(null);
   const [items, setItems] = useState<Record<string, any>[]>([]);
+  const [filteredItems, setFilteredItems] = useState<Record<string, any>[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,8 +56,25 @@ export function AdminResourceScreen() {
   const [editingItem, setEditingItem] = useState<Record<string, any> | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'list' | 'stats'>('list');
 
   const title = config?.label || humanizeResourceKey(resource);
+
+  // Filter items based on search query
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredItems(items);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = items.filter(item => {
+        return Object.values(item).some(value => 
+          value && String(value).toLowerCase().includes(query)
+        );
+      });
+      setFilteredItems(filtered);
+    }
+  }, [searchQuery, items]);
 
   useEffect(() => {
     if (!auth.isAuthenticated) {
@@ -78,6 +96,7 @@ export function AdminResourceScreen() {
         }
         setCollections(collectionsData);
         setItems(list as Record<string, any>[]);
+        setFilteredItems(list as Record<string, any>[]);
       } catch (err: any) {
         if (mounted) {
           setError(err?.response?.data?.detail || 'Impossible de charger la ressource.');
@@ -371,11 +390,13 @@ export function AdminResourceScreen() {
   // Custom Header
   const HeaderComponent = (
     <View style={styles.header}>
-      <Pressable onPress={() => router.replace('/admin')} style={styles.backButton}>
+      <Pressable onPress={() => router.back()} style={styles.backButton}>
         <MaterialCommunityIcons name="arrow-left" size={24} color={colors.dark} />
       </Pressable>
       <Text style={styles.headerTitle}>{title}</Text>
-      <View style={{ width: 40 }} />
+      <Pressable onPress={() => {}} style={styles.refreshButton}>
+        <MaterialCommunityIcons name="refresh" size={24} color={colors.dark} />
+      </Pressable>
     </View>
   );
 
@@ -384,7 +405,7 @@ export function AdminResourceScreen() {
     const entries = Object.entries(item).filter(
       ([k, v]) => !skip.includes(k) && v !== null && v !== undefined && v !== ''
     );
-    if (entries.length === 0) return 'Aucune donnée supplémentaire';
+    if (entries.length === 0) return '';
     return entries
       .map(([k, v]) => {
         const keyText = k.replace(/_id$/, '').replace('_', ' ').toUpperCase();
@@ -393,6 +414,24 @@ export function AdminResourceScreen() {
       })
       .join('\n');
   };
+
+  // Stats component
+  const StatsView = () => (
+    <View style={styles.statsContainer}>
+      <View style={styles.statCard}>
+        <Text style={styles.statNumber}>{items.length}</Text>
+        <Text style={styles.statLabel}>Total</Text>
+      </View>
+      <View style={styles.statCard}>
+        <Text style={styles.statNumber}>{filteredItems.length}</Text>
+        <Text style={styles.statLabel}>Affichés</Text>
+      </View>
+      <View style={styles.statCard}>
+        <Text style={styles.statNumber}>{config?.creatable ? '✓' : '✗'}</Text>
+        <Text style={styles.statLabel}>Création</Text>
+      </View>
+    </View>
+  );
 
   return (
     <AppScreen header={HeaderComponent} scroll={false} style={styles.screen}>
@@ -414,56 +453,120 @@ export function AdminResourceScreen() {
           }
         />
 
+        {/* Tabs */}
+        <View style={styles.tabsContainer}>
+          <Pressable 
+            style={[styles.tab, activeTab === 'list' && styles.activeTab]}
+            onPress={() => setActiveTab('list')}
+          >
+            <MaterialCommunityIcons 
+              name="format-list-bulleted" 
+              size={20} 
+              color={activeTab === 'list' ? colors.primary : colors.textMuted} 
+            />
+            <Text style={[styles.tabText, activeTab === 'list' && styles.activeTabText]}>
+              Liste
+            </Text>
+          </Pressable>
+          <Pressable 
+            style={[styles.tab, activeTab === 'stats' && styles.activeTab]}
+            onPress={() => setActiveTab('stats')}
+          >
+            <MaterialCommunityIcons 
+              name="chart-bar" 
+              size={20} 
+              color={activeTab === 'stats' ? colors.primary : colors.textMuted} 
+            />
+            <Text style={[styles.tabText, activeTab === 'stats' && styles.activeTabText]}>
+              Statistiques
+            </Text>
+          </Pressable>
+        </View>
+
         {error ? <InlineNotice tone="danger" message={error} /> : null}
         {loading ? <InlineNotice tone="info" message="Chargement de la ressource..." /> : null}
 
-        <FlatList
-          data={items}
-          keyExtractor={(item, index) => String(item.id ?? index)}
-          contentContainerStyle={styles.list}
-          renderItem={({ item }) => (
-            <Card style={styles.itemCard}>
-              <View style={styles.row}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.itemTitle}>
-                    {config?.listLabel ? config.listLabel(item) : item.name || item.description || `ID #${item.id}`}
-                  </Text>
+        {activeTab === 'stats' ? (
+          <StatsView />
+        ) : (
+          <>
+            {/* Search Bar */}
+            {!loading && items.length > 0 && (
+              <View style={styles.searchContainer}>
+                <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Rechercher..."
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  placeholderTextColor={colors.textMuted}
+                />
+                {searchQuery.length > 0 && (
+                  <Pressable onPress={() => setSearchQuery('')}>
+                    <MaterialCommunityIcons name="close" size={20} color={colors.textMuted} />
+                  </Pressable>
+                )}
+              </View>
+            )}
+
+            <FlatList
+              data={filteredItems}
+              keyExtractor={(item, index) => String(item.id ?? index)}
+              contentContainerStyle={styles.list}
+              renderItem={({ item, index }) => (
+                <Card style={styles.itemCard}>
+                  <View style={styles.itemHeader}>
+                    <View style={styles.itemIndex}>
+                      <Text style={styles.itemIndexText}>#{index + 1}</Text>
+                    </View>
+                    <View style={styles.itemContent}>
+                      <Text style={styles.itemTitle}>
+                        {config?.listLabel ? config.listLabel(item) : item.name || item.description || `ID #${item.id}`}
+                      </Text>
+                      {item.id && <Text style={styles.itemId}>ID: {item.id}</Text>}
+                    </View>
+                  </View>
+                  
                   <Text style={styles.itemMeta} numberOfLines={8}>
                     {formatItemMeta(item)}
                   </Text>
-                </View>
-              </View>
-              <View style={styles.cardActions}>
-                {config?.editable ? (
-                  <PrimaryButton 
-                    label="Modifier" 
-                    variant="secondary" 
-                    size="sm" 
-                    icon="pencil"
-                    onPress={() => resetForm(item)} 
-                    style={styles.cardButton} 
+                  
+                  <View style={styles.cardActions}>
+                    {config?.editable ? (
+                      <PrimaryButton 
+                        label="Modifier" 
+                        variant="secondary" 
+                        size="sm" 
+                        icon="pencil"
+                        onPress={() => resetForm(item)} 
+                        style={styles.cardButton} 
+                      />
+                    ) : null}
+                    {config?.deletable ? (
+                      <PrimaryButton 
+                        label="Supprimer" 
+                        variant="ghost" 
+                        size="sm" 
+                        icon="trash-can-outline"
+                        onPress={() => handleDelete(item.id)} 
+                        style={styles.cardButton} 
+                      />
+                    ) : null}
+                  </View>
+                </Card>
+              )}
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={
+                !loading ? (
+                  <InlineNotice 
+                    tone="info" 
+                    message={searchQuery ? 'Aucun résultat pour votre recherche.' : 'Aucun élément enregistré pour le moment.'} 
                   />
-                ) : null}
-                {config?.deletable ? (
-                  <PrimaryButton 
-                    label="Supprimer" 
-                    variant="ghost" 
-                    size="sm" 
-                    icon="trash-can-outline"
-                    onPress={() => handleDelete(item.id)} 
-                    style={styles.cardButton} 
-                  />
-                ) : null}
-              </View>
-            </Card>
-          )}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            !loading ? (
-              <InlineNotice tone="info" message="Aucun élément enregistré pour le moment." />
-            ) : null
-          }
-        />
+                ) : null
+              }
+            />
+          </>
+        )}
       </View>
 
       <Modal visible={formVisible} transparent animationType="slide" onRequestClose={closeModal}>
@@ -526,6 +629,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  refreshButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bgAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   headerTitle: {
     fontSize: fontSizes.lg,
     fontWeight: fontWeights.bold,
@@ -533,6 +644,51 @@ const styles = StyleSheet.create({
   },
   addButton: {
     minWidth: 100,
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.white,
+    borderRadius: radius.md,
+    padding: spacing.xs,
+    marginBottom: spacing.sm,
+    gap: spacing.xs,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    borderRadius: radius.sm,
+    gap: spacing.xs,
+  },
+  activeTab: {
+    backgroundColor: 'rgba(244, 149, 23, 0.08)',
+  },
+  tabText: {
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.semibold,
+    color: colors.textMuted,
+  },
+  activeTabText: {
+    color: colors.primary,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(21, 26, 49, 0.04)',
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: fontSizes.sm,
+    color: colors.dark,
   },
   list: {
     gap: spacing.sm,
@@ -542,20 +698,42 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     marginBottom: spacing.xs,
   },
-  row: {
+  itemHeader: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
     gap: spacing.sm,
+  },
+  itemIndex: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(244, 149, 23, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  itemIndexText: {
+    fontSize: fontSizes.xs,
+    fontWeight: fontWeights.bold,
+    color: colors.primary,
+  },
+  itemContent: {
+    flex: 1,
   },
   itemTitle: {
     color: colors.dark,
     fontSize: fontSizes.md,
     fontWeight: fontWeights.bold,
   },
+  itemId: {
+    color: colors.textMuted,
+    fontSize: fontSizes.xs,
+    marginTop: 2,
+  },
   itemMeta: {
     color: colors.textMuted,
     fontSize: fontSizes.xs,
     fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
-    marginTop: 6,
+    marginTop: spacing.sm,
     lineHeight: 16,
     backgroundColor: colors.bgAlt,
     padding: spacing.sm,
@@ -568,6 +746,32 @@ const styles = StyleSheet.create({
   },
   cardButton: {
     flex: 1,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    paddingVertical: spacing.lg,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.white,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(21, 26, 49, 0.04)',
+  },
+  statNumber: {
+    fontSize: fontSizes.xxl,
+    fontWeight: fontWeights.bold,
+    color: colors.primary,
+  },
+  statLabel: {
+    fontSize: fontSizes.xs,
+    color: colors.textMuted,
+    marginTop: spacing.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   modalBackdrop: {
     flex: 1,

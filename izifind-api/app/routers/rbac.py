@@ -4,14 +4,105 @@ from typing import List
 
 from ..database import get_db
 from ..models.auth import User, Role, Permission
-from ..schemas.auth import RoleCreate, Role as RoleSchema, PermissionCreate, Permission as PermissionSchema, AssignRoleRequest
+from ..schemas.auth import (
+    RoleCreate, Role as RoleSchema, PermissionCreate, Permission as PermissionSchema,
+    AssignRoleRequest, User as UserSchema, UserUpdate
+)
 from ..dependencies import get_current_active_user, RoleChecker, PermissionChecker
+from ..security import get_password_hash
 
-router = APIRouter(prefix="/api/rbac", tags=["RBAC"])
+router = APIRouter(prefix="/api/rbac", tags=["RBAC"]) 
 
 # We define a basic role requirement: e.g. "admin" role needed for these actions.
 # You can customize this or use permissions like "manage_roles" instead.
 require_admin = Depends(RoleChecker(["admin"]))
+
+
+# ═══════════════════════════════════════════════════════════
+#  USERS - CRUD Complet
+# ═══════════════════════════════════════════════════════════
+
+@router.get(
+    "/users",
+    response_model=List[UserSchema],
+    summary="Lister les utilisateurs",
+    description="Renvoie la liste de tous les utilisateurs."
+)
+def get_users(db: Session = Depends(get_db), current_user: User = require_admin):
+    return db.query(User).all()
+
+
+@router.get(
+    "/users/{user_id}",
+    response_model=UserSchema,
+    summary="Détail d'un utilisateur",
+    description="Renvoie les informations complètes d'un utilisateur."
+)
+def get_user(user_id: int, db: Session = Depends(get_db), current_user: User = require_admin):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+@router.put(
+    "/users/{user_id}",
+    response_model=UserSchema,
+    summary="Modifier un utilisateur",
+    description="Met à jour les informations d'un utilisateur."
+)
+def update_user(user_id: int, user_in: UserUpdate, db: Session = Depends(get_db), current_user: User = require_admin):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Mettre à jour les champs fournis
+    if user_in.username is not None:
+        # Vérifier que le nom d'utilisateur n'est pas déjà utilisé
+        existing_user = db.query(User).filter(User.username == user_in.username, User.id != user_id).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Username already taken")
+        user.username = user_in.username
+    
+    if user_in.email is not None:
+        # Vérifier que l'email n'est pas déjà utilisé
+        existing_user = db.query(User).filter(User.email == user_in.email, User.id != user_id).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Email already taken")
+        user.email = user_in.email
+    
+    if user_in.is_active is not None:
+        user.is_active = user_in.is_active
+    
+    if user_in.is_superuser is not None:
+        user.is_superuser = user_in.is_superuser
+    
+    if user_in.commissariat_id is not None:
+        user.commissariat_id = user_in.commissariat_id
+    
+    if user_in.password is not None:
+        user.hashed_password = get_password_hash(user_in.password)
+    
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@router.delete(
+    "/users/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Supprimer un utilisateur",
+    description="Supprime un utilisateur."
+)
+def delete_user(user_id: int, db: Session = Depends(get_db), current_user: User = require_admin):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    db.delete(user)
+    db.commit()
+    return None
 
 @router.get(
     "/roles", 

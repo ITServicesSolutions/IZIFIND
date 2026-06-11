@@ -15,6 +15,8 @@ interface Props {
   editable?: boolean;
   readonly?: boolean;
   leftIcon?: keyof typeof MaterialCommunityIcons.glyphMap;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  autoCorrect?: boolean;
 }
 
 export function Input({
@@ -29,6 +31,8 @@ export function Input({
   editable = true,
   readonly = false,
   leftIcon,
+  autoCapitalize,
+  autoCorrect,
 }: Props) {
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<TextInput>(null);
@@ -74,6 +78,8 @@ export function Input({
           onBlur={() => setIsFocused(false)}
           underlineColorAndroid="transparent"
           textAlignVertical={multiline ? 'top' : 'center'}
+          autoCapitalize={autoCapitalize}
+          autoCorrect={autoCorrect}
         />
       </Pressable>
       {helperText ? <Text style={styles.helper}>{helperText}</Text> : null}

@@ -391,7 +391,7 @@ onMounted(async () => {
     console.error('Error loading reference tables:', err)
   }
 
-  // Fetch coordinates for found objects
+  // Fetch coordinates for found objects (with fallback to Paris)
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -399,7 +399,7 @@ onMounted(async () => {
         longitudeUser.value = pos.coords.longitude
       },
       (err) => {
-        console.warn('Geolocation denied or unavailable', err)
+        console.info('Geolocation not available (using fallback location):', err.message)
       }
     )
   }

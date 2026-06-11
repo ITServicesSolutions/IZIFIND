@@ -5,16 +5,36 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from app.database import SessionLocal, engine, Base
-from app.models.auth import Role, User
+from app.models.auth import Role, User, Permission
 from app.models.objets import Statut, Categorie, SousCategorie, Couleur, Commissariat
 from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# List of tables to generate permissions for
+TABLES = [
+    "users", "roles", "permissions", "commissariats", "categories",
+    "sous_categories", "marques", "couleurs", "statuts", "titres_objets",
+    "objets", "images_objets", "modifications_objets", "promesses", "temoignages"
+]
+
+# CRUD operations
+CRUD_OPERATIONS = ["create", "read", "update", "delete"]
+
 def seed_data():
     # Ensure tables exist
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
+
+    print("Seeding permissions...")
+    for table in TABLES:
+        for op in CRUD_OPERATIONS:
+            perm_name = f"{op}_{table}"
+            existing_perm = db.query(Permission).filter(Permission.name == perm_name).first()
+            if not existing_perm:
+                perm = Permission(name=perm_name, description=f"Permission to {op} {table}")
+                db.add(perm)
+    db.commit()
 
     print("Seeding roles...")
     admin_role = db.query(Role).filter(Role.name == "admin").first()
@@ -27,6 +47,16 @@ def seed_data():
         commissaire_role = Role(name="commissaire", description="Agent de police ou commissaire")
         db.add(commissaire_role)
     db.commit()
+
+    # Assign all permissions to admin role
+    print("Assigning permissions to admin role...")
+    all_permissions = db.query(Permission).all()
+    admin_role = db.query(Role).filter(Role.name == "admin").first()
+    if admin_role:
+        for perm in all_permissions:
+            if perm not in admin_role.permissions:
+                admin_role.permissions.append(perm)
+        db.commit()
 
     print("Seeding statuts...")
     for st in ["PERDU", "TRANSMIS", "TROUVE"]:

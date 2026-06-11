@@ -3,13 +3,15 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models.objets import Objet, Commissariat
 
-router = APIRouter(prefix="/api/statistiques", tags=["Statistiques"])
+router = APIRouter(prefix="/api", tags=["Statistiques"])
 
-@router.get("/")
-def get_statistics(
-    db: Session = Depends(get_db),
+@router.get(
+    "/statistiques",
     summary="Obtenir les statistiques globales de l'application IZIFIND",
     description="Obtenir les statistiques globales de l'application IZIFIND.",
+)
+def get_statistics(
+    db: Session = Depends(get_db),
 ):
     """
     Renvoie les statistiques globales de l'application IZIFIND.

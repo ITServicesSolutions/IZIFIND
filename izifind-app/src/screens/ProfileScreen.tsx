@@ -40,7 +40,9 @@ export function ProfileScreen() {
   // Custom Header
   const HeaderComponent = (
     <View style={styles.header}>
-      <View style={{ width: 40 }} />
+      <Pressable onPress={() => router.back()} style={styles.backButton}>
+        <MaterialCommunityIcons name="arrow-left" size={24} color={colors.dark} />
+      </Pressable>
       <Text style={styles.headerTitle}>Mon Profil</Text>
       <View style={{ width: 40 }} />
     </View>
@@ -94,6 +96,25 @@ export function ProfileScreen() {
         </Card>
 
         {/* Action Menu List */}
+        <Text style={styles.menuSectionTitle}>Paramètres du compte</Text>
+        <Card style={styles.menuCard}>
+          <MenuRow
+            icon="account-edit"
+            label="Modifier le profil"
+            subtitle="Mettre à jour vos informations"
+            onPress={() => router.push('/edit-profile')}
+            color={colors.primary}
+          />
+          <View style={styles.menuSeparator} />
+          <MenuRow
+            icon="key-change"
+            label="Changer le mot de passe"
+            subtitle="Sécuriser votre compte"
+            onPress={() => router.push('/change-password')}
+            color="#A882FF"
+          />
+        </Card>
+
         <Text style={styles.menuSectionTitle}>Raccourcis & Actions</Text>
         <Card style={styles.menuCard}>
           <MenuRow
@@ -161,6 +182,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(21, 26, 49, 0.04)',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.bgAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: fontSizes.lg,

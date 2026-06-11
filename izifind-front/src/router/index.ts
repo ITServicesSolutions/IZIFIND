@@ -24,6 +24,8 @@ const router = createRouter({
     { path: '/found', redirect: '/declare?type=found' },
     { path: '/login', name: 'login', component: () => import('../views/auth/LoginView.vue') },
     { path: '/register', name: 'register', component: () => import('../views/auth/RegisterView.vue') },
+    { path: '/forgot-password', name: 'forgot-password', component: () => import('../views/auth/ForgotPasswordView.vue') },
+    { path: '/reset-password', name: 'reset-password', component: () => import('../views/auth/ResetPasswordView.vue') },
     { path: '/profile', name: 'profile', component: () => import('../views/public/ProfileView.vue'), meta: { requiresAuth: true } },
     { path: '/dashboard', redirect: '/admin/dashboard' },
     { path: '/admin', redirect: '/admin/dashboard' },
@@ -31,7 +33,7 @@ const router = createRouter({
     { path: '/admin/categories', name: 'admin-categories', component: () => import('../views/admin/CategoriesView.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
     { path: '/admin/roles', name: 'admin-roles', component: () => import('../views/admin/RolesView.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
     {
-      path: '/admin/:resource(categories|sous-categories|marques|couleurs|statuts|titres|objets|images|modifications|promesses|temoignages|commissariats|permissions)',
+      path: '/admin/:resource(categories|sous-categories|marques|couleurs|statuts|titres|objets|images|modifications|permissions|roles)',
       name: 'admin-resource',
       component: () => import('../views/admin/TableResourceView.vue'),
       props: route => ({ resource: route.params.resource as AdminResourceKey }),

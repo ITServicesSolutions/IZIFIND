@@ -79,11 +79,6 @@
             <h4>{{ item.label }}</h4>
             <p>{{ item.subtitle }}</p>
           </RouterLink>
-          <div class="admin-nav-card admin-nav-card--disabled">
-            <AdminIcon name="users" />
-            <h4>Utilisateurs</h4>
-            <p>Le backend n’expose pas encore de liste publique des comptes.</p>
-          </div>
         </div>
       </section>
     </div>

@@ -151,7 +151,9 @@ export type AdminResourceKey =
   | 'promesses'
   | 'temoignages'
   | 'commissariats'
-  | 'permissions';
+  | 'permissions'
+  | 'users'
+  | 'roles';
 
 export type FieldType = 'text' | 'textarea' | 'number' | 'boolean' | 'date' | 'select' | 'image' | 'readonly';
 
@@ -181,6 +183,8 @@ export interface ResourceCollections {
   temoignages: Temoignage[];
   commissariats: Commissariat[];
   permissions: Permission[];
+  users: User[];
+  roles: Role[];
 }
 
 export interface AdminResourceConfig {

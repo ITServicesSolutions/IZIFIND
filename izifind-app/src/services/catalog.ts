@@ -56,7 +56,7 @@ export async function getTitres() {
 }
 
 export async function getCommissariats() {
-  const { data } = await http.get<Commissariat[]>('/commissariats/');
+  const { data } = await http.get<Commissariat[]>('/commissariats');
   return data;
 }
 
@@ -81,12 +81,12 @@ export async function getModifications() {
 }
 
 export async function getPromesses() {
-  const { data } = await http.get<Promesse[]>('/promesses/');
+  const { data } = await http.get<Promesse[]>('/promesses');
   return data;
 }
 
 export async function getTemoignages() {
-  const { data } = await http.get<Temoignage[]>('/temoignages/');
+  const { data } = await http.get<Temoignage[]>('/temoignages');
   return data;
 }
 
@@ -101,6 +101,6 @@ export async function getRoles() {
 }
 
 export async function getStatistics() {
-  const { data } = await http.get<{ perdus: number; trouves: number; postes: number }>('/statistiques/');
+  const { data } = await http.get<{ perdus: number; trouves: number; postes: number }>('/statistiques');
   return data;
 }
