@@ -17,6 +17,9 @@ interface Props {
   leftIcon?: keyof typeof MaterialCommunityIcons.glyphMap;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   autoCorrect?: boolean;
+  maxLength?: number;
+  style?: any;
+  inputStyle?: any;
 }
 
 export function Input({
@@ -33,6 +36,9 @@ export function Input({
   leftIcon,
   autoCapitalize,
   autoCorrect,
+  maxLength,
+  style,
+  inputStyle,
 }: Props) {
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<TextInput>(null);
@@ -44,7 +50,7 @@ export function Input({
   };
 
   return (
-    <View style={styles.group}>
+    <View style={[styles.group, style]}>
       <Text style={styles.label}>{label}</Text>
       <Pressable 
         onPress={handlePress}
@@ -65,7 +71,7 @@ export function Input({
         )}
         <TextInput
           ref={inputRef}
-          style={[styles.input, multiline ? styles.multiline : null]}
+          style={[styles.input, multiline ? styles.multiline : null, inputStyle]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -80,6 +86,7 @@ export function Input({
           textAlignVertical={multiline ? 'top' : 'center'}
           autoCapitalize={autoCapitalize}
           autoCorrect={autoCorrect}
+          maxLength={maxLength}
         />
       </Pressable>
       {helperText ? <Text style={styles.helper}>{helperText}</Text> : null}
@@ -130,7 +137,7 @@ const styles = StyleSheet.create({
     minHeight: 50,
   },
   multiline: {
-    minHeight: 90,
+    minHeight: 50,
     textAlignVertical: 'top',
   },
   readonly: {

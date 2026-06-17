@@ -211,19 +211,19 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   logo: {
-    width: 200,
-    height: 130,
+    width: 180,
+    height: 90,
     borderRadius: radius.sm,
   },
   greetingContainer: {
     justifyContent: 'center',
   },
   greetingText: {
-    fontSize: fontSizes.lg,
+    fontSize: fontSizes.sm,
     color: colors.textMuted,
   },
   appName: {
-    fontSize: fontSizes.lg,
+    fontSize: fontSizes.sm,
     fontWeight: fontWeights.bold,
     color: colors.dark,
     lineHeight: 18,

@@ -155,7 +155,7 @@ export type AdminResourceKey =
   | 'users'
   | 'roles';
 
-export type FieldType = 'text' | 'textarea' | 'number' | 'boolean' | 'date' | 'select' | 'image' | 'readonly';
+export type FieldType = 'text' | 'textarea' | 'number' | 'boolean' | 'date' | 'select' | 'image' | 'readonly' | 'multicheck';
 
 export interface ResourceFieldConfig {
   name: string;

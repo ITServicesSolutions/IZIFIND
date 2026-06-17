@@ -105,6 +105,8 @@ def forgot_password(
     Valide l'email et envoie un lien de reset si l'account existe.
     """
     email = payload.email
+    logger.info(f"Forgot password request for email: {email}")
+    
     # Validation email (Pydantic already validates it's an email, but let's keep extra validation just in case
     try:
         validate_email(email)
@@ -117,15 +119,19 @@ def forgot_password(
     # Vérifier que l'utilisateur existe
     user = db.query(User).filter(User.email == email).first()
     if not user:
+        logger.info(f"No user found for email: {email} - not sending email")
         # Pour la sécurité, ne pas révéler si l'email existe ou non
         return {
             "message": "Si un compte existe avec cet email, un lien de réinitialisation a été envoyé."
         }
     
     if not user.is_active:
+        logger.info(f"User {email} is inactive - not sending email")
         return {
             "message": "Si un compte existe avec cet email, un lien de réinitialisation a été envoyé."
         }
+    
+    logger.info(f"User {email} found and active - proceeding with password reset")
     
     # Générer le token
     plain_token, hashed_token = generate_reset_token()
@@ -150,6 +156,7 @@ def forgot_password(
     reset_url = f"{settings.FRONTEND_URL}/reset-password?token={plain_token}"
     
     # Envoyer l'email
+    logger.info(f"Sending password reset email to {email}")
     email_sent = send_password_reset_email(
         to_email=user.email,
         username=user.username,
@@ -158,6 +165,8 @@ def forgot_password(
     
     if not email_sent:
         logger.warning(f"Failed to send reset email to {user.email}, but token was stored")
+    else:
+        logger.info(f"Password reset email successfully sent to {user.email}")
     
     return {
         "message": "Si un compte existe avec cet email, un lien de réinitialisation a été envoyé."

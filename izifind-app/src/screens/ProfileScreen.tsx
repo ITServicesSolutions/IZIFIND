@@ -40,9 +40,7 @@ export function ProfileScreen() {
   // Custom Header
   const HeaderComponent = (
     <View style={styles.header}>
-      <Pressable onPress={() => router.back()} style={styles.backButton}>
-        <MaterialCommunityIcons name="arrow-left" size={24} color={colors.dark} />
-      </Pressable>
+      <View style={{ width: 40 }} />
       <Text style={styles.headerTitle}>Mon Profil</Text>
       <View style={{ width: 40 }} />
     </View>

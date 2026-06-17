@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Image, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -34,6 +35,8 @@ export function DeclareScreen() {
   const { type } = useLocalSearchParams<{ type?: string }>();
   const initialMode = type === 'found' ? 'found' : 'lost';
 
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 4;
   const [mode, setMode] = useState<'lost' | 'found'>(initialMode);
   const [categories, setCategories] = useState<Category[]>([]);
   const [sousCategories, setSousCategories] = useState<SousCategorie[]>([]);
@@ -62,6 +65,45 @@ export function DeclareScreen() {
     face: null,
     derriere: null,
   });
+
+  const validateStep = () => {
+    switch (currentStep) {
+      case 1:
+        if (!form.description.trim()) {
+          Alert.alert('Validation', 'La description est obligatoire.');
+          return false;
+        }
+        if (!form.date_action) {
+          Alert.alert('Validation', 'La date est obligatoire.');
+          return false;
+        }
+        return true;
+      case 2:
+        return true;
+      case 3:
+        if (!images.profil || !images.face || !images.derriere) {
+          Alert.alert('Validation', 'Veuillez ajouter les 3 photos demandées.');
+          return false;
+        }
+        return true;
+      default:
+        return true;
+    }
+  };
+
+  const goToNextStep = () => {
+    if (validateStep() && currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const goToPreviousStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    } else {
+      router.back();
+    }
+  };
 
   // Sync mode state with route parameters when they change
   useEffect(() => {
@@ -272,7 +314,7 @@ export function DeclareScreen() {
   // Custom Header
   const HeaderComponent = (
     <View style={styles.headerBar}>
-      <Pressable onPress={() => router.back()} style={styles.backButton}>
+      <Pressable onPress={goToPreviousStep} style={styles.backButton}>
         <MaterialCommunityIcons name="arrow-left" size={22} color={colors.dark} />
       </Pressable>
       <Text style={styles.headerTitle}>Signaler un objet</Text>
@@ -280,219 +322,356 @@ export function DeclareScreen() {
     </View>
   );
 
-  return (
-    <AppScreen header={HeaderComponent} keyboardAvoiding style={styles.screen} contentContainerStyle={styles.scrollContent}>
-      {/* Mode Switcher */}
-          <Card style={styles.switcherCard}>
-            <Text style={styles.switcherLabel}>Type de signalement</Text>
-            <View style={styles.switcherGrid}>
-              <PrimaryButton
-                label="J'ai perdu"
-                variant={mode === 'lost' ? 'primary' : 'secondary'}
-                onPress={() => {
-                  setMode('lost');
-                  setRewardEnabled(true);
-                }}
-                icon="magnify"
-                style={[
-                  styles.switcherBtn,
-                  mode === 'lost' && { backgroundColor: colors.lost, borderColor: colors.lost }
-                ]}
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <>
+            {/* Mode Switcher */}
+            <Card style={styles.switcherCard}>
+              <Text style={styles.switcherLabel}>Type de signalement</Text>
+              <View style={styles.switcherGrid}>
+                <PrimaryButton
+                  label="J'ai perdu"
+                  variant={mode === 'lost' ? 'primary' : 'secondary'}
+                  onPress={() => {
+                    setMode('lost');
+                    setRewardEnabled(true);
+                  }}
+                  icon="magnify"
+                  style={[
+                    styles.switcherBtn,
+                    mode === 'lost' && { backgroundColor: colors.lost, borderColor: colors.lost }
+                  ]}
+                />
+                <PrimaryButton
+                  label="J'ai trouvé"
+                  variant={mode === 'found' ? 'primary' : 'secondary'}
+                  onPress={() => {
+                    setMode('found');
+                    setRewardEnabled(false);
+                  }}
+                  icon="hand-heart"
+                  style={[
+                    styles.switcherBtn,
+                    mode === 'found' && { backgroundColor: colors.primary, borderColor: colors.primary }
+                  ]}
+                />
+              </View>
+            </Card>
+
+            {!auth.isAuthenticated ? (
+              <InlineNotice
+                tone="warning"
+                title="Connexion requise"
+                message="Cette déclaration nécessite une session active. Vous allez être redirigé vers l'écran de connexion."
               />
-              <PrimaryButton
-                label="J'ai trouvé"
-                variant={mode === 'found' ? 'primary' : 'secondary'}
-                onPress={() => {
-                  setMode('found');
-                  setRewardEnabled(false);
-                }}
-                icon="hand-heart"
-                style={[
-                  styles.switcherBtn,
-                  mode === 'found' && { backgroundColor: colors.primary, borderColor: colors.primary }
-                ]}
-              />
-            </View>
-          </Card>
+            ) : null}
 
-          {!auth.isAuthenticated ? (
-            <InlineNotice
-              tone="warning"
-              title="Connexion requise"
-              message="Cette déclaration nécessite une session active. Vous allez être redirigé vers l'écran de connexion."
-            />
-          ) : null}
-
-          {/* Section 1: 📦 L'objet */}
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionIconCircle}>
-              <MaterialCommunityIcons name="cube-outline" size={18} color={colors.primary} />
+            {/* Section 1: 📦 L'objet */}
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionIconCircle}>
+                <MaterialCommunityIcons name="cube-outline" size={18} color={colors.primary} />
+              </View>
+              <Text style={styles.sectionTitle}>Caractéristiques de l'objet</Text>
             </View>
-            <Text style={styles.sectionTitle}>Caractéristiques de l'objet</Text>
-          </View>
-          <Card style={styles.sectionCard}>
-            <SelectField
-              label="Catégorie"
-              value={form.categorie_id}
-              options={categoryOptions}
-              onChange={(value) => setForm((current) => ({ ...current, categorie_id: typeof value === 'number' ? value : null, souscategorie_id: null }))}
-            />
-            <SelectField
-              label="Sous-catégorie"
-              value={form.souscategorie_id}
-              options={subcategoryOptions}
-              onChange={(value) => setForm((current) => ({ ...current, souscategorie_id: typeof value === 'number' ? value : null }))}
-              helperText={form.categorie_id ? undefined : 'Choisissez d\'abord une catégorie.'}
-            />
-            <Input
-              label="Description"
-              value={form.description}
-              onChangeText={(value) => setForm((current) => ({ ...current, description: value }))}
-              placeholder="Marque, signes distinctifs, inscriptions..."
-              multiline
-              leftIcon="text"
-            />
-            <Input
-              label="Date de l'événement"
-              value={form.date_action}
-              onChangeText={(value) => setForm((current) => ({ ...current, date_action: value }))}
-              placeholder="AAAA-MM-JJ"
-              leftIcon="calendar"
-            />
-          </Card>
-
-          {/* Section 2: 📍 Localisation */}
-          <View style={styles.sectionHeader}>
-            <View style={[styles.sectionIconCircle, { backgroundColor: colors.pastel.blue }]}>
-              <MaterialCommunityIcons name="map-marker-outline" size={18} color="#60A5FA" />
-            </View>
-            <Text style={styles.sectionTitle}>Localisation</Text>
-          </View>
-          <Card style={styles.sectionCard}>
-            <Input
-              label="Lieu ou repère"
-              value={form.lieu}
-              onChangeText={(value) => setForm((current) => ({ ...current, lieu: value }))}
-              placeholder="Adresse, station, repère..."
-              leftIcon="map-marker-outline"
-            />
-            {mode === 'found' && (
-              <View style={styles.coordBox}>
-                <InlineNotice tone="info" title="Position GPS" message={locationNote} />
-                <View style={styles.coordsRow}>
-                  <View style={styles.flex}>
-                    <Input
-                      label="Latitude"
-                      value={latitude}
-                      onChangeText={setLatitude}
-                      keyboardType="numeric"
-                      placeholder="48.8566"
-                    />
-                  </View>
-                  <View style={styles.flex}>
-                    <Input
-                      label="Longitude"
-                      value={longitude}
-                      onChangeText={setLongitude}
-                      keyboardType="numeric"
-                      placeholder="2.3522"
-                    />
-                  </View>
+            <Card style={styles.sectionCard}>
+              <View style={styles.categoryRow}>
+                <View style={styles.categoryCol}>
+                  <SelectField
+                    label="Catégorie"
+                    value={form.categorie_id}
+                    options={categoryOptions}
+                    onChange={(value) => setForm((current) => ({ ...current, categorie_id: typeof value === 'number' ? value : null, souscategorie_id: null }))}
+                  />
+                </View>
+                <View style={styles.categoryCol}>
+                  <SelectField
+                    label="Sous-catégorie"
+                    value={form.souscategorie_id}
+                    options={subcategoryOptions}
+                    onChange={(value) => setForm((current) => ({ ...current, souscategorie_id: typeof value === 'number' ? value : null }))}
+                    helperText={form.categorie_id ? undefined : 'Choisissez d\'abord une catégorie.'}
+                  />
                 </View>
               </View>
-            )}
-          </Card>
-
-          {/* Section 3: 📞 Contact & Récompense */}
-          <View style={styles.sectionHeader}>
-            <View style={[styles.sectionIconCircle, { backgroundColor: colors.pastel.green }]}>
-              <MaterialCommunityIcons name="phone-outline" size={18} color="#2DD4BF" />
+              <View style={styles.descriptionContainer}>
+                <Input
+                  label="Description"
+                  value={form.description}
+                  onChangeText={(value) => setForm((current) => ({ ...current, description: value }))}
+                  placeholder="Marque, signes distinctifs, inscriptions..."
+                  multiline
+                  leftIcon="text"
+                  maxLength={500}
+                />
+                <Text style={styles.charCount}>
+                  {form.description.length}/500
+                </Text>
+              </View>
+              <Input
+                label="Date de l'événement"
+                value={form.date_action}
+                onChangeText={(value) => setForm((current) => ({ ...current, date_action: value }))}
+                placeholder="AAAA-MM-JJ"
+                leftIcon="calendar"
+              />
+            </Card>
+          </>
+        );
+      case 2:
+        return (
+          <>
+            {/* Section 2: 📍 Localisation */}
+            <View style={styles.sectionHeader}>
+              <View style={[styles.sectionIconCircle, { backgroundColor: colors.pastel.blue }]}>
+                <MaterialCommunityIcons name="map-marker-outline" size={18} color="#60A5FA" />
+              </View>
+              <Text style={styles.sectionTitle}>Localisation</Text>
             </View>
-            <Text style={styles.sectionTitle}>Contact & Récompense</Text>
-          </View>
-          <Card style={styles.sectionCard}>
-            <Input
-              label="Numéro de téléphone"
-              value={form.contact_phone}
-              onChangeText={(value) => setForm((current) => ({ ...current, contact_phone: value }))}
-              keyboardType="phone-pad"
-              placeholder="Ex: 0612345678"
-              leftIcon="phone-outline"
-            />
-            <Input
-              label="Email de contact"
-              value={form.contact_email}
-              onChangeText={(value) => setForm((current) => ({ ...current, contact_email: value }))}
-              keyboardType="email-address"
-              placeholder="Ex: jean.dupont@mail.com"
-              leftIcon="email-outline"
-            />
-
-            {mode === 'lost' && (
-              <View style={styles.rewardBox}>
-                <Text style={styles.rewardTitle}>Souhaitez-vous offrir une récompense ?</Text>
-                <View style={styles.rewardActions}>
-                  <PrimaryButton
-                    label="Oui"
-                    variant={rewardEnabled ? 'primary' : 'secondary'}
-                    onPress={() => setRewardEnabled(true)}
-                    style={[styles.rewardButton, rewardEnabled && { backgroundColor: colors.reward, borderColor: colors.reward }]}
-                  />
-                  <PrimaryButton
-                    label="Non"
-                    variant={!rewardEnabled ? 'primary' : 'secondary'}
-                    onPress={() => setRewardEnabled(false)}
-                    style={styles.rewardButton}
-                  />
+            <Card style={styles.sectionCard}>
+              <Input
+                label="Lieu ou repère"
+                value={form.lieu}
+                onChangeText={(value) => setForm((current) => ({ ...current, lieu: value }))}
+                placeholder="Adresse, station, repère..."
+                leftIcon="map-marker-outline"
+              />
+              {mode === 'found' && (
+                <View style={styles.coordBox}>
+                  <InlineNotice tone="info" title="Position GPS" message={locationNote} />
+                  <View style={styles.coordsRow}>
+                    <View style={styles.flex}>
+                      <Input
+                        label="Latitude"
+                        value={latitude}
+                        onChangeText={setLatitude}
+                        keyboardType="numeric"
+                        placeholder="48.8566"
+                      />
+                    </View>
+                    <View style={styles.flex}>
+                      <Input
+                        label="Longitude"
+                        value={longitude}
+                        onChangeText={setLongitude}
+                        keyboardType="numeric"
+                        placeholder="2.3522"
+                      />
+                    </View>
+                  </View>
                 </View>
-                {rewardEnabled && (
-                  <Input
-                    label="Montant de la récompense (€)"
-                    value={form.montant_promesse}
-                    onChangeText={(value) => setForm((current) => ({ ...current, montant_promesse: value }))}
-                    keyboardType="numeric"
-                    placeholder="Ex: 50"
-                    leftIcon="cash-multiple"
-                  />
+              )}
+            </Card>
+
+            {/* Section 3: 📞 Contact & Récompense */}
+            <View style={styles.sectionHeader}>
+              <View style={[styles.sectionIconCircle, { backgroundColor: colors.pastel.green }]}>
+                <MaterialCommunityIcons name="phone-outline" size={18} color="#2DD4BF" />
+              </View>
+              <Text style={styles.sectionTitle}>Contact & Récompense</Text>
+            </View>
+            <Card style={styles.sectionCard}>
+              <Input
+                label="Numéro de téléphone"
+                value={form.contact_phone}
+                onChangeText={(value) => setForm((current) => ({ ...current, contact_phone: value }))}
+                keyboardType="phone-pad"
+                placeholder="Ex: 0612345678"
+                leftIcon="phone-outline"
+              />
+              <Input
+                label="Email de contact"
+                value={form.contact_email}
+                onChangeText={(value) => setForm((current) => ({ ...current, contact_email: value }))}
+                keyboardType="email-address"
+                placeholder="Ex: jean.dupont@mail.com"
+                leftIcon="email-outline"
+              />
+
+              {mode === 'lost' && (
+                <View style={styles.rewardBox}>
+                  <Text style={styles.rewardTitle}>Souhaitez-vous offrir une récompense ?</Text>
+                  <View style={styles.rewardActions}>
+                    <PrimaryButton
+                      label="Oui"
+                      variant={rewardEnabled ? 'primary' : 'secondary'}
+                      onPress={() => setRewardEnabled(true)}
+                      style={[styles.rewardButton, rewardEnabled && { backgroundColor: colors.reward, borderColor: colors.reward }]}
+                    />
+                    <PrimaryButton
+                      label="Non"
+                      variant={!rewardEnabled ? 'primary' : 'secondary'}
+                      onPress={() => setRewardEnabled(false)}
+                      style={styles.rewardButton}
+                    />
+                  </View>
+                  {rewardEnabled && (
+                    <Input
+                      label="Montant de la récompense (€)"
+                      value={form.montant_promesse}
+                      onChangeText={(value) => setForm((current) => ({ ...current, montant_promesse: value }))}
+                      keyboardType="numeric"
+                      placeholder="Ex: 50"
+                      leftIcon="cash-multiple"
+                    />
+                  )}
+                </View>
+              )}
+            </Card>
+          </>
+        );
+      case 3:
+        return (
+          <>
+            {/* Section 4: 📸 Photos (3-column grid) */}
+            <View style={styles.sectionHeader}>
+              <View style={[styles.sectionIconCircle, { backgroundColor: colors.pastel.purple }]}>
+                <MaterialCommunityIcons name="camera-outline" size={18} color="#A882FF" />
+              </View>
+              <Text style={styles.sectionTitle}>Photos requises (3 angles)</Text>
+            </View>
+            <Card style={styles.sectionCard}>
+              <View style={styles.photosGrid}>
+                <PhotoSlot label="Profil" icon="account-outline" uri={images.profil?.uri} onPick={() => pickImage('profil')} />
+                <PhotoSlot label="Face" icon="image-outline" uri={images.face?.uri} onPick={() => pickImage('face')} />
+                <PhotoSlot label="Derrière" icon="image-multiple-outline" uri={images.derriere?.uri} onPick={() => pickImage('derriere')} />
+              </View>
+              <Text style={styles.photosHint}>Touchez chaque cadre pour ajouter une photo</Text>
+            </Card>
+          </>
+        );
+      case 4:
+        return (
+          <>
+            {/* Résumé */}
+            <View style={styles.sectionHeader}>
+              <View style={[styles.sectionIconCircle, { backgroundColor: colors.pastel.blue }]}>
+                <MaterialCommunityIcons name="check-circle-outline" size={18} color="#60A5FA" />
+              </View>
+              <Text style={styles.sectionTitle}>Récapitulatif</Text>
+            </View>
+            <Card style={styles.sectionCard}>
+              <Text style={styles.summaryTitle}>{mode === 'lost' ? 'Objet perdu' : 'Objet trouvé'}</Text>
+              {form.description && (
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Description :</Text>
+                  <Text style={styles.summaryValue}>{form.description}</Text>
+                </View>
+              )}
+              {form.lieu && (
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Lieu :</Text>
+                  <Text style={styles.summaryValue}>{form.lieu}</Text>
+                </View>
+              )}
+              <View style={styles.summaryPhotos}>
+                <Text style={styles.summaryLabel}>Photos :</Text>
+                <Text style={styles.summaryValue}>
+                  {images.profil && images.face && images.derriere ? '3 photos ajoutées' : 'Photos manquantes'}
+                </Text>
+              </View>
+            </Card>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      {HeaderComponent}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.keyboardAvoiding}
+      >
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Progress Indicator */}
+          <View style={styles.progressContainer}>
+            {Array.from({ length: totalSteps }).map((_, index) => (
+              <View key={index} style={styles.progressStep}>
+                <View style={[
+                  styles.progressCircle,
+                  index + 1 < currentStep ? styles.progressCircleCompleted :
+                  index + 1 === currentStep ? styles.progressCircleActive :
+                  styles.progressCircleInactive
+                ]}>
+                  {index + 1 < currentStep ? (
+                    <MaterialCommunityIcons name="check" size={14} color={colors.white} />
+                  ) : (
+                    <Text style={[
+                      styles.progressNumber,
+                      index + 1 === currentStep ? styles.progressNumberActive : styles.progressNumberInactive
+                    ]}>
+                      {index + 1}
+                    </Text>
+                  )}
+                </View>
+                {index < totalSteps - 1 && (
+                  <View style={[
+                    styles.progressLine,
+                    index + 1 < currentStep ? styles.progressLineCompleted : styles.progressLineInactive
+                  ]} />
                 )}
               </View>
-            )}
-          </Card>
-
-          {/* Section 4: 📸 Photos (3-column grid) */}
-          <View style={styles.sectionHeader}>
-            <View style={[styles.sectionIconCircle, { backgroundColor: colors.pastel.purple }]}>
-              <MaterialCommunityIcons name="camera-outline" size={18} color="#A882FF" />
-            </View>
-            <Text style={styles.sectionTitle}>Photos requises (3 angles)</Text>
+            ))}
           </View>
-          <Card style={styles.sectionCard}>
-            <View style={styles.photosGrid}>
-              <PhotoSlot label="Profil" icon="account-outline" uri={images.profil?.uri} onPick={() => pickImage('profil')} />
-              <PhotoSlot label="Face" icon="image-outline" uri={images.face?.uri} onPick={() => pickImage('face')} />
-              <PhotoSlot label="Derrière" icon="image-multiple-outline" uri={images.derriere?.uri} onPick={() => pickImage('derriere')} />
-            </View>
-            <Text style={styles.photosHint}>Touchez chaque cadre pour ajouter une photo</Text>
-          </Card>
 
           {error ? <InlineNotice tone="danger" message={error} /> : null}
           {loadingCollections ? <InlineNotice tone="info" message="Chargement des référentiels..." /> : null}
 
-      <PrimaryButton
-        label="Soumettre la déclaration"
-        loading={loading}
-        onPress={handleSubmit}
-        size="lg"
-        icon="send"
-        style={styles.submitButton}
-      />
-    </AppScreen>
+          {renderStepContent()}
+        </ScrollView>
+
+        {/* Navigation Buttons - Fixed at bottom */}
+        <View style={styles.navigationButtons}>
+          {currentStep > 1 && (
+            <PrimaryButton
+              label="Précédent"
+              variant="secondary"
+              onPress={goToPreviousStep}
+              icon="arrow-left"
+              style={styles.navButton}
+            />
+          )}
+          {currentStep < totalSteps ? (
+            <PrimaryButton
+              label="Suivant"
+              onPress={goToNextStep}
+              icon="arrow-right"
+              style={[styles.navButton, currentStep === 1 && styles.navButtonFull]}
+            />
+          ) : (
+            <PrimaryButton
+              label="Soumettre la déclaration"
+              loading={loading}
+              onPress={handleSubmit}
+              icon="send"
+              style={[styles.navButton, styles.navButtonFull]}
+            />
+          )}
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    padding: 0,
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.bgAlt,
+  },
+  keyboardAvoiding: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
   },
   flex: {
     flex: 1,
@@ -501,7 +680,114 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
-    paddingBottom: spacing.xxl * 2,
+    paddingBottom: spacing.md,
+  },
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
+  progressStep: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  progressCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+  },
+  progressCircleActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  progressCircleCompleted: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  progressCircleInactive: {
+    backgroundColor: colors.white,
+    borderColor: 'rgba(21, 26, 49, 0.2)',
+  },
+  progressNumber: {
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.bold,
+  },
+  progressNumberActive: {
+    color: colors.white,
+  },
+  progressNumberInactive: {
+    color: 'rgba(21, 26, 49, 0.5)',
+  },
+  progressLine: {
+    width: 40,
+    height: 2,
+    marginHorizontal: spacing.xs,
+  },
+  progressLineCompleted: {
+    backgroundColor: colors.primary,
+  },
+  progressLineInactive: {
+    backgroundColor: 'rgba(21, 26, 49, 0.2)',
+  },
+  navigationButtons: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.white,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(21, 26, 49, 0.04)',
+  },
+  navButton: {
+    flex: 1,
+  },
+  navButtonFull: {
+    flex: 1,
+  },
+  summaryTitle: {
+    fontSize: fontSizes.lg,
+    fontWeight: fontWeights.bold,
+    color: colors.dark,
+    marginBottom: spacing.md,
+  },
+  summaryItem: {
+    marginBottom: spacing.sm,
+  },
+  summaryLabel: {
+    fontSize: fontSizes.xs,
+    fontWeight: fontWeights.bold,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  summaryValue: {
+    fontSize: fontSizes.md,
+    color: colors.dark,
+    marginTop: 2,
+  },
+  summaryPhotos: {
+    marginTop: spacing.md,
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  categoryCol: {
+    flex: 1,
+  },
+  descriptionContainer: {
+    position: 'relative',
+  },
+  charCount: {
+    alignSelf: 'flex-end',
+    fontSize: fontSizes.xs,
+    color: colors.textMuted,
+    marginTop: 2,
   },
   headerBar: {
     flexDirection: 'row',

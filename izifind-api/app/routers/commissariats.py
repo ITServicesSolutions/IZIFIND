@@ -132,3 +132,44 @@ def valider_objet(
     db.refresh(objet)
     
     return objet
+
+
+@router.put(
+    "/commissariats/objets/{objet_id}/transmettre",
+    response_model=ObjetSchema,
+    summary="Signaler un objet perdu comme retrouvé (statut transmis)",
+    description="[COMMISSAIRE] Permet de modifier le statut d'un objet de PERDU à TRANSMIS."
+)
+def transmettre_objet(
+    objet_id: int,
+    db: Session = Depends(get_db),
+    current_user=require_commissaire
+):
+    objet = db.query(Objet).filter(Objet.id == objet_id).first()
+    if not objet:
+        raise HTTPException(status_code=404, detail="Objet introuvable")
+
+    # On vérifie que le statut "PERDU" existe
+    statut_perdu = db.query(Statut).filter(Statut.name.ilike("PERDU")).first()
+    if not statut_perdu or objet.statut_id != statut_perdu.id:
+        raise HTTPException(
+            status_code=400,
+            detail="Cet objet n'est pas déclaré comme perdu."
+        )
+
+    # On vérifie que le statut "TRANSMIS" existe
+    statut_transmis = db.query(Statut).filter(Statut.name.ilike("TRANSMIS")).first()
+    if not statut_transmis:
+        statut_transmis = Statut(name="TRANSMIS", description="Objet transmis au commissariat")
+        db.add(statut_transmis)
+        db.commit()
+        db.refresh(statut_transmis)
+
+    # Passage au statut TRANSMIS
+    objet.statut_id = statut_transmis.id
+
+    db.commit()
+    db.refresh(objet)
+    
+    return objet
+

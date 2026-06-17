@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, Pressable, Alert } from 'react-native';
+import { StyleSheet, Text, View, Pressable, Alert, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppScreen } from '@/components/AppScreen';
@@ -65,14 +65,18 @@ export function ForgotPasswordScreen() {
             <MaterialCommunityIcons name="arrow-left" size={24} color={colors.dark} />
           </Pressable>
           <View style={styles.logoRow}>
-            <Text style={styles.brandName}>IZIFIND</Text>
+            <Text style={styles.brandName}>Réinitialiser le mot de passe</Text>
           </View>
           <View style={{ width: 40 }} />
         </View>
 
         <View style={styles.titleBlock}>
           <View style={styles.iconCircle}>
-            <MaterialCommunityIcons name="key-outline" size={22} color={colors.primary} />
+            <Image
+              source={require('../assets/images/logo.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
           <Text style={styles.title}>Mot de passe oublié</Text>
           <Text style={styles.subtitle}>Entrez votre email pour réinitialiser votre mot de passe</Text>
@@ -137,15 +141,19 @@ const styles = StyleSheet.create({
   },
   titleBlock: {
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.xl,
   },
   iconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 140,
+    height: 140,
+    borderRadius: 30,
     backgroundColor: 'rgba(244, 149, 23, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  logoImage: {
+    width: 160,
+    height: 90,
   },
   title: {
     color: colors.dark,

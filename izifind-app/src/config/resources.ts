@@ -9,6 +9,7 @@ export const ADMIN_RESOURCES: AdminResourceConfig[] = [
     creatable: false,
     editable: true,
     deletable: true,
+    listLabel: (item) => `${item.username} (${item.email})`,
     fields: [
       { name: 'username', label: 'Nom d\'utilisateur', type: 'text', required: true },
       { name: 'email', label: 'Email', type: 'text', required: true },
@@ -29,6 +30,7 @@ export const ADMIN_RESOURCES: AdminResourceConfig[] = [
     fields: [
       { name: 'name', label: 'Nom', type: 'text', required: true },
       { name: 'description', label: 'Description', type: 'textarea' },
+      { name: 'permission_ids', label: 'Permissions', type: 'multicheck', optionsKey: 'permissions' },
     ],
     deletePath: (id) => `/rbac/roles/${id}`,
   },
@@ -225,12 +227,13 @@ export const ADMIN_RESOURCES: AdminResourceConfig[] = [
     subtitle: 'Autorisations RBAC',
     endpoint: '/rbac/permissions',
     creatable: true,
-    editable: false,
-    deletable: false,
+    editable: true,
+    deletable: true,
     fields: [
       { name: 'name', label: 'Nom', type: 'text', required: true },
       { name: 'description', label: 'Description', type: 'textarea' },
     ],
+    deletePath: (id) => `/rbac/permissions/${id}`,
   },
 ];
 

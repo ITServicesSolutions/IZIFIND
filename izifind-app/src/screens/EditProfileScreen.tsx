@@ -36,7 +36,7 @@ export function EditProfileScreen() {
         email: email.trim(),
       });
       Alert.alert('Succès', 'Vos informations ont été mises à jour.');
-      router.back();
+      router.replace('/profile');
     } catch (err: any) {
       Alert.alert('Erreur', err?.response?.data?.detail || 'Impossible de mettre à jour le profil.');
     } finally {
@@ -46,7 +46,7 @@ export function EditProfileScreen() {
 
   const HeaderComponent = (
     <View style={styles.header}>
-      <Pressable onPress={() => router.back()} style={styles.backButton}>
+      <Pressable onPress={() => router.replace('/profile')} style={styles.backButton}>
         <MaterialCommunityIcons name="arrow-left" size={24} color={colors.dark} />
       </Pressable>
       <Text style={styles.headerTitle}>Modifier le profil</Text>

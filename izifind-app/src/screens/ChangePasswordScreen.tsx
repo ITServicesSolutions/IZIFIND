@@ -42,7 +42,7 @@ export function ChangePasswordScreen() {
     try {
       await auth.changePassword(oldPassword, newPassword);
       Alert.alert('Succès', 'Votre mot de passe a été changé avec succès.');
-      router.back();
+      router.replace('/profile');
     } catch (err: any) {
       Alert.alert('Erreur', err?.response?.data?.detail || 'Impossible de changer le mot de passe.');
     } finally {
@@ -52,7 +52,7 @@ export function ChangePasswordScreen() {
 
   const HeaderComponent = (
     <View style={styles.header}>
-      <Pressable onPress={() => router.back()} style={styles.backButton}>
+      <Pressable onPress={() => router.replace('/profile')} style={styles.backButton}>
         <MaterialCommunityIcons name="arrow-left" size={24} color={colors.dark} />
       </Pressable>
       <Text style={styles.headerTitle}>Changer le mot de passe</Text>

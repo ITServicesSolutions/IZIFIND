@@ -39,14 +39,11 @@ export function SelectField({ label, value, options, onChange, placeholder = 'Ch
       <Modal 
         visible={visible} 
         transparent 
-        animationType="slide" 
+        animationType="fade" 
         onRequestClose={() => setVisible(false)}
       >
         <Pressable style={styles.backdrop} onPress={() => setVisible(false)}>
           <Pressable style={styles.sheet} onPress={() => undefined}>
-            {/* Grab handle indicator */}
-            <View style={styles.grabHandle} />
-            
             <View style={styles.sheetHeader}>
               <Text style={styles.sheetTitle}>{label}</Text>
               <Pressable onPress={() => setVisible(false)} style={styles.closeButton}>
@@ -122,30 +119,23 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(21, 26, 49, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.md,
   },
   sheet: {
+    width: '100%',
+    maxWidth: 400,
     backgroundColor: colors.white,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    paddingTop: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    paddingBottom: 40,
-    maxHeight: '75%',
+    borderRadius: radius.xl,
+    padding: spacing.lg,
+    maxHeight: '80%',
     shadowColor: '#151a31',
     shadowOffset: { width: 0, height: -10 },
     shadowOpacity: 0.1,
     shadowRadius: 24,
     elevation: 20,
-  },
-  grabHandle: {
-    width: 38,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: 'rgba(21, 26, 49, 0.1)',
-    alignSelf: 'center',
-    marginBottom: spacing.md,
   },
   sheetHeader: {
     flexDirection: 'row',

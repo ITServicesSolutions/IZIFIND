@@ -7,6 +7,12 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 days
     PASSWORD_RESET_TOKEN_EXPIRE_HOURS: int = 24
+    ALLOWED_HOSTS: str = "localhost,127.0.0.1"
+    
+    @property
+    def allowed_hosts_list(self) -> list:
+        """Parse ALLOWED_HOSTS from comma-separated string to list"""
+        return [host.strip() for host in self.ALLOWED_HOSTS.split(',') if host.strip()]
     
     # ── Database ───────────────────────────────────────────────
     DATABASE_ENGINE: str = "sqlite"

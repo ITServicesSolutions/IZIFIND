@@ -18,7 +18,7 @@ import { InlineNotice } from '@/components/InlineNotice';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SectionHeader } from '@/components/SectionHeader';
 import { colors, radius, spacing, fontSizes, fontWeights } from '@/constants/theme';
-import { getImages, getObjectById, getStatuts } from '@/services/catalog';
+import { getImages, getObjectById, getStatuts, transmettreObjet, validerObjet } from '@/services/catalog';
 import { createTemoignage } from '@/services/community';
 import { useAuth } from '@/auth/AuthContext';
 import type { ImageObjet, Objet, Statut } from '@/types/api';
@@ -39,6 +39,7 @@ export function ObjectDetailScreen() {
   const [note, setNote] = useState('');
   const [sending, setSending] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -71,7 +72,51 @@ export function ObjectDetailScreen() {
     [objet?.statut_id, statuts]
   );
 
-  const isLost = objet?.statut_id === 1;
+  const statutPerdu = useMemo(() => statuts.find(s => s.name.toUpperCase() === 'PERDU'), [statuts]);
+  const statutTransmis = useMemo(() => statuts.find(s => s.name.toUpperCase() === 'TRANSMIS'), [statuts]);
+
+  const isLost = useMemo(() => {
+    if (statutPerdu) return objet?.statut_id === statutPerdu.id;
+    return objet?.statut_id === 1;
+  }, [objet?.statut_id, statutPerdu]);
+
+  const isTransmis = useMemo(() => {
+    if (statutTransmis) return objet?.statut_id === statutTransmis.id;
+    return objet?.statut_id === 2;
+  }, [objet?.statut_id, statutTransmis]);
+
+  const isCommissaire = useMemo(() => {
+    if (!auth.isAuthenticated || !auth.user) return false;
+    return auth.user.is_superuser || auth.user.roles?.some(r => r.name === 'commissaire' || r.name === 'admin');
+  }, [auth.isAuthenticated, auth.user]);
+
+  const handleTransmettre = async () => {
+    if (!objet) return;
+    setActionLoading(true);
+    try {
+      const updated = await transmettreObjet(objet.id);
+      setObjet(updated);
+      Alert.alert('Succès', 'L\'objet a bien été mis en statut TRANSMIS.');
+    } catch (err: any) {
+      Alert.alert('Erreur', err?.response?.data?.detail || 'Impossible de mettre à jour le statut.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleValider = async () => {
+    if (!objet) return;
+    setActionLoading(true);
+    try {
+      const updated = await validerObjet(objet.id);
+      setObjet(updated);
+      Alert.alert('Succès', 'L\'objet a bien été validé et mis en statut TROUVE.');
+    } catch (err: any) {
+      Alert.alert('Erreur', err?.response?.data?.detail || 'Impossible de valider l\'objet.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -220,6 +265,42 @@ export function ObjectDetailScreen() {
           <InfoRow icon="email-outline" label="Email de contact" value={objet.contact_email || 'Non communiqué'} />
         </View>
       </Card>
+
+      {/* Actions Commissaire Section */}
+      {isCommissaire && (
+        <Card style={styles.commissaireCard}>
+          <View style={styles.commissaireHeader}>
+            <View style={styles.commissaireIconCircle}>
+              <MaterialCommunityIcons name="shield-account" size={18} color={colors.primary} />
+            </View>
+            <Text style={styles.commissaireTitle}>Actions Commissaire</Text>
+          </View>
+          <View style={styles.commissaireActions}>
+            {isLost && (
+              <PrimaryButton
+                label="Marquer comme Transmis"
+                loading={actionLoading}
+                onPress={handleTransmettre}
+                icon="swap-horizontal"
+                size="md"
+              />
+            )}
+            {isTransmis && (
+              <PrimaryButton
+                label="Valider au commissariat (Trouvé)"
+                loading={actionLoading}
+                onPress={handleValider}
+                icon="check-decagram"
+                size="md"
+                style={{ backgroundColor: '#22c55e', borderColor: '#22c55e' }}
+              />
+            )}
+            {!isLost && !isTransmis && (
+              <Text style={styles.commissaireStatusText}>Cet objet a déjà été validé et traité.</Text>
+            )}
+          </View>
+        </Card>
+      )}
 
       {/* Testimonial Section */}
       <SectionHeader title="Témoignage" subtitle="Partagez votre retour d'expérience." />
@@ -486,5 +567,38 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.md,
     textAlignVertical: 'top',
     lineHeight: 22,
+  },
+  commissaireCard: {
+    padding: spacing.lg,
+    gap: spacing.md,
+    borderColor: 'rgba(244, 149, 23, 0.15)',
+    borderWidth: 1.5,
+  },
+  commissaireHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  commissaireIconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(244, 149, 23, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  commissaireTitle: {
+    fontSize: fontSizes.md,
+    fontWeight: fontWeights.bold,
+    color: colors.dark,
+  },
+  commissaireActions: {
+    gap: spacing.sm,
+  },
+  commissaireStatusText: {
+    fontSize: fontSizes.sm,
+    color: colors.textMuted,
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
 });

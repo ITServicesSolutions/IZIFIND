@@ -104,3 +104,14 @@ export async function getStatistics() {
   const { data } = await http.get<{ perdus: number; trouves: number; postes: number }>('/statistiques');
   return data;
 }
+
+export async function validerObjet(id: number) {
+  const { data } = await http.put<Objet>(`/commissariats/objets/${id}/valider`);
+  return data;
+}
+
+export async function transmettreObjet(id: number) {
+  const { data } = await http.put<Objet>(`/commissariats/objets/${id}/transmettre`);
+  return data;
+}
+
