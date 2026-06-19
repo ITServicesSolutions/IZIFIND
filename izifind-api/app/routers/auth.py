@@ -5,11 +5,14 @@ from sqlalchemy.orm import Session
 from typing import Any
 from datetime import datetime, timedelta
 from email_validator import validate_email, EmailNotValidError
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token as google_id_token
+import secrets
 import logging
 
 from ..database import get_db
 from ..models.auth import User, PasswordResetToken
-from ..schemas.auth import UserCreate, User as UserSchema, Token, UserUpdate, ChangePassword, ForgotPasswordRequest, ResetPasswordRequest
+from ..schemas.auth import UserCreate, User as UserSchema, Token, UserUpdate, ChangePassword, ForgotPasswordRequest, ResetPasswordRequest, GoogleAuthRequest
 from ..security import (
     get_password_hash, verify_password, create_access_token,
     generate_reset_token, verify_reset_token
@@ -23,6 +26,44 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
+
+def _clean_phone(phone: str | None) -> str | None:
+    if phone is None:
+        return None
+    value = phone.strip()
+    return value or None
+
+
+def _ensure_unique_user_fields(
+    db: Session,
+    *,
+    username: str | None = None,
+    email: str | None = None,
+    phone: str | None = None,
+    exclude_user_id: int | None = None,
+) -> None:
+    if username is not None:
+        query = db.query(User).filter(User.username == username)
+        if exclude_user_id is not None:
+            query = query.filter(User.id != exclude_user_id)
+        if query.first():
+            raise HTTPException(status_code=400, detail="Username already taken")
+
+    if email is not None:
+        query = db.query(User).filter(User.email == email)
+        if exclude_user_id is not None:
+            query = query.filter(User.id != exclude_user_id)
+        if query.first():
+            raise HTTPException(status_code=400, detail="Email already taken")
+
+    phone = _clean_phone(phone)
+    if phone is not None:
+        query = db.query(User).filter(User.phone == phone)
+        if exclude_user_id is not None:
+            query = query.filter(User.id != exclude_user_id)
+        if query.first():
+            raise HTTPException(status_code=400, detail="Phone already taken")
+
 @router.post(
     "/register", 
     response_model=UserSchema,
@@ -30,23 +71,20 @@ router = APIRouter(prefix="/api/auth", tags=["Auth"])
     description="Permet de créer un nouveau compte utilisateur."
 )
 def register(user_in: UserCreate, db: Session = Depends(get_db)) -> Any:
-    user = db.query(User).filter(User.username == user_in.username).first()
-    if user:
-        raise HTTPException(
-            status_code=400,
-            detail="The user with this username already exists in the system.",
-        )
-    user = db.query(User).filter(User.email == user_in.email).first()
-    if user:
-        raise HTTPException(
-            status_code=400,
-            detail="The user with this email already exists in the system.",
-        )
+    phone = _clean_phone(user_in.phone)
+    _ensure_unique_user_fields(
+        db,
+        username=user_in.username,
+        email=str(user_in.email),
+        phone=phone,
+    )
     
     user = User(
         username=user_in.username,
-        email=user_in.email,
+        email=str(user_in.email),
+        phone=phone,
         hashed_password=get_password_hash(user_in.password),
+        commissariat_id=user_in.commissariat_id,
     )
     db.add(user)
     db.commit()
@@ -61,10 +99,12 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)) -> Any:
 )
 @limiter.limit("5/minute")
 def login(request: Request, db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()) -> Any:
+    identifier = form_data.username.strip()
     user = db.query(User).filter(
         or_(
-            User.username == form_data.username,
-            User.email == form_data.username,
+            User.username == identifier,
+            User.email == identifier,
+            User.phone == identifier,
         )
     ).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
@@ -72,6 +112,61 @@ def login(request: Request, db: Session = Depends(get_db), form_data: OAuth2Pass
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     
+    access_token = create_access_token(data={"sub": user.username})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post(
+    "/google",
+    response_model=Token,
+    summary="Connexion Google",
+    description="Verifie un ID token Google, cree ou retrouve l'utilisateur, puis retourne un JWT IZIFIND."
+)
+def google_login(payload: GoogleAuthRequest, db: Session = Depends(get_db)) -> Any:
+    if not settings.GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=503, detail="Google authentication is not configured")
+
+    try:
+        claims = google_id_token.verify_oauth2_token(
+            payload.id_token,
+            google_requests.Request(),
+            settings.GOOGLE_CLIENT_ID,
+        )
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid Google token")
+
+    email = claims.get("email")
+    if not email:
+        raise HTTPException(status_code=400, detail="Google token does not contain an email")
+    if claims.get("email_verified") is False:
+        raise HTTPException(status_code=400, detail="Google email is not verified")
+
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        base_username = (claims.get("name") or email.split("@")[0]).lower()
+        base_username = "".join(ch if ch.isalnum() or ch in ("_", "-") else "_" for ch in base_username).strip("_")
+        if not base_username:
+            base_username = "google_user"
+
+        username = base_username[:80]
+        suffix = 1
+        while db.query(User).filter(User.username == username).first():
+            suffix += 1
+            username = f"{base_username[:70]}_{suffix}"
+
+        user = User(
+            username=username,
+            email=email,
+            hashed_password=get_password_hash(secrets.token_urlsafe(32)),
+            is_active=True,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    if not user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+
     access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -264,18 +359,18 @@ def update_me(
     """
     # Mettre à jour les champs fournis
     if user_in.username is not None:
-        # Vérifier que le nom d'utilisateur n'est pas déjà utilisé
-        existing_user = db.query(User).filter(User.username == user_in.username, User.id != current_user.id).first()
-        if existing_user:
-            raise HTTPException(status_code=400, detail="Username already taken")
+        _ensure_unique_user_fields(db, username=user_in.username, exclude_user_id=current_user.id)
         current_user.username = user_in.username
     
     if user_in.email is not None:
-        # Vérifier que l'email n'est pas déjà utilisé
-        existing_user = db.query(User).filter(User.email == user_in.email, User.id != current_user.id).first()
-        if existing_user:
-            raise HTTPException(status_code=400, detail="Email already taken")
-        current_user.email = user_in.email
+        email = str(user_in.email)
+        _ensure_unique_user_fields(db, email=email, exclude_user_id=current_user.id)
+        current_user.email = email
+
+    if user_in.phone is not None:
+        phone = _clean_phone(user_in.phone)
+        _ensure_unique_user_fields(db, phone=phone, exclude_user_id=current_user.id)
+        current_user.phone = phone
     
     if user_in.commissariat_id is not None:
         current_user.commissariat_id = user_in.commissariat_id

@@ -4,6 +4,7 @@ import type { TokenResponse, User } from '@/types/api';
 export interface RegisterPayload {
   username: string;
   email: string;
+  phone?: string;
   password: string;
 }
 
@@ -23,6 +24,11 @@ export async function loginRequest(username: string, password: string) {
 
 export async function registerRequest(payload: RegisterPayload) {
   const { data } = await http.post<User>('/auth/register', payload);
+  return data;
+}
+
+export async function googleLoginRequest(idToken: string) {
+  const { data } = await http.post<TokenResponse>('/auth/google', { id_token: idToken });
   return data;
 }
 
@@ -50,4 +56,3 @@ export async function changePasswordRequest(oldPassword: string, newPassword: st
   const { data } = await http.post('/auth/change-password', { old_password: oldPassword, new_password: newPassword });
   return data;
 }
-

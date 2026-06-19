@@ -14,12 +14,14 @@ export function EditProfileScreen() {
   const auth = useAuth();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (auth.user) {
       setUsername(auth.user.username || '');
       setEmail(auth.user.email || '');
+      setPhone(auth.user.phone || '');
     }
   }, [auth.user]);
 
@@ -34,6 +36,7 @@ export function EditProfileScreen() {
       await auth.updateProfile({
         username: username.trim(),
         email: email.trim(),
+        phone: phone.trim(),
       });
       Alert.alert('Succès', 'Vos informations ont été mises à jour.');
       router.replace('/profile');
@@ -79,6 +82,14 @@ export function EditProfileScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
             leftIcon="email-outline"
+          />
+          <Input
+            label="Téléphone"
+            value={phone}
+            onChangeText={setPhone}
+            placeholder="+33100000003"
+            keyboardType="phone-pad"
+            leftIcon="phone-outline"
           />
 
           <PrimaryButton

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View, Platform, Linking, Share, Alert } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
+import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { AppScreen } from '@/components/AppScreen';
 import { Card } from '@/components/Card';
 import { InlineNotice } from '@/components/InlineNotice';
@@ -10,10 +11,12 @@ import { getCommissariats } from '@/services/catalog';
 import type { Commissariat } from '@/types/api';
 
 // Bounding box for mapping coordinates in Paris region
-const MIN_LAT = 48.81;
-const MAX_LAT = 48.90;
-const MIN_LNG = 2.25;
-const MAX_LNG = 2.45;
+const INITIAL_REGION = {
+  latitude: 48.8566,
+  longitude: 2.3522,
+  latitudeDelta: 0.1,
+  longitudeDelta: 0.1,
+};
 
 export function MapScreen() {
   const [commissariats, setCommissariats] = useState<Commissariat[]>([]);
@@ -92,15 +95,7 @@ export function MapScreen() {
     });
   }, [commissariats, searchQuery]);
 
-  // Project coordinates (lat, lng) to map container percentages
-  const getPositionStyle = (lat: number, lng: number) => {
-    const x = ((lng - MIN_LNG) / (MAX_LNG - MIN_LNG)) * 100;
-    const y = (1 - (lat - MIN_LAT) / (MAX_LAT - MIN_LAT)) * 100;
-    return {
-      left: `${Math.max(5, Math.min(95, x))}%`,
-      top: `${Math.max(5, Math.min(95, y))}%`,
-    } as any;
-  };
+
 
   const handleNavigate = (station: Commissariat) => {
     const url = Platform.select({
@@ -159,65 +154,35 @@ export function MapScreen() {
         <View style={styles.container}>
           {/* Large Map Container (takes remaining space) */}
           <View style={[styles.mapContainer, bottomSheetExpanded && styles.mapContainerCompact]}>
-            {/* Map background elements */}
-            <View style={styles.mapGridLineH1} />
-            <View style={styles.mapGridLineH2} />
-            <View style={styles.mapGridLineH3} />
-            <View style={styles.mapGridLineV1} />
-            <View style={styles.mapGridLineV2} />
-            <View style={styles.mapGridLineV3} />
-            <View style={styles.radarRing1} />
-            <View style={styles.radarRing2} />
-            <View style={styles.radarRing3} />
-
-            {/* Map legend */}
-            <View style={styles.legend}>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: '#3b82f6' }]} />
-                <Text style={styles.legendText}>Vous</Text>
-              </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
-                <Text style={styles.legendText}>Poste</Text>
-              </View>
-            </View>
-
-            {/* User location pin */}
-            {userLocation && (
-              <View
-                style={[
-                  styles.userPinWrapper,
-                  getPositionStyle(userLocation.latitude, userLocation.longitude),
-                ]}
-              >
-                <View style={styles.userPinPulse} />
-                <View style={styles.userPinDot} />
-              </View>
-            )}
-
-            {/* Station pins */}
-            {commissariats.map((station) => {
-              const isSelected = selectedStation?.id === station.id;
-              return (
-                <Pressable
+            <MapView
+              style={StyleSheet.absoluteFillObject}
+              provider={PROVIDER_DEFAULT}
+              initialRegion={userLocation ? {
+                ...INITIAL_REGION,
+                latitude: userLocation.latitude,
+                longitude: userLocation.longitude,
+              } : INITIAL_REGION}
+              showsUserLocation={true}
+              showsMyLocationButton={true}
+            >
+              {commissariats.map((station) => (
+                <Marker
                   key={station.id}
-                  style={[
-                    styles.pinWrapper,
-                    getPositionStyle(station.latitude, station.longitude),
-                  ]}
+                  coordinate={{ latitude: station.latitude, longitude: station.longitude }}
+                  title={station.name}
+                  description={station.adresse || ''}
                   onPress={() => setSelectedStation(station)}
                 >
-                  <View style={[styles.pinBackground, isSelected && styles.pinBackgroundSelected]}>
+                  <View style={[styles.pinBackground, selectedStation?.id === station.id && styles.pinBackgroundSelected]}>
                     <MaterialCommunityIcons
                       name="shield"
-                      size={isSelected ? 18 : 14}
-                      color={isSelected ? colors.white : colors.primary}
+                      size={selectedStation?.id === station.id ? 18 : 14}
+                      color={selectedStation?.id === station.id ? colors.white : colors.primary}
                     />
                   </View>
-                  {isSelected && <View style={styles.selectedPinRing} />}
-                </Pressable>
-              );
-            })}
+                </Marker>
+              ))}
+            </MapView>
 
             {/* Floating Station Detail Bottom Sheet */}
             {selectedStation && (

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { fetchMe, loginRequest, registerRequest, forgotPasswordRequest, resetPasswordRequest, updateProfileRequest, changePasswordRequest } from '@/services/auth';
+import { fetchMe, loginRequest, registerRequest, forgotPasswordRequest, resetPasswordRequest, updateProfileRequest, changePasswordRequest, googleLoginRequest } from '@/services/auth';
 import { setAuthToken } from '@/services/http';
 import type { RegisterPayload } from '@/services/auth';
 import type { User } from '@/types/api';
@@ -14,6 +14,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (username: string, password: string) => Promise<void>;
+  loginWithGoogleToken: (idToken: string) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   refreshUser: () => Promise<void>;
   logout: () => Promise<void>;
@@ -87,6 +88,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginWithGoogleToken = async (idToken: string) => {
+    try {
+      const response = await googleLoginRequest(idToken);
+      await persistToken(response.access_token);
+      const profile = await fetchMe();
+      setUser(profile);
+    } catch (error) {
+      await persistToken(null);
+      throw error;
+    }
+  };
+
   const register = async (payload: RegisterPayload) => {
     await registerRequest(payload);
   };
@@ -133,8 +146,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       token,
       isReady,
       isAuthenticated: Boolean(token),
-      isAdmin: Boolean(user?.is_superuser || user?.roles?.some((role) => role.name === 'admin')),
+      isAdmin: Boolean(user?.is_superuser || user?.roles?.some((role) => role.name === 'admin' || role.name === 'commissaire')),
       login,
+      loginWithGoogleToken,
       register,
       refreshUser,
       logout,

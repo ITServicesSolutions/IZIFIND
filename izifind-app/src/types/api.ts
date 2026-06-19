@@ -15,6 +15,7 @@ export interface User {
   id: number;
   username: string;
   email: string;
+  phone?: string | null;
   commissariat_id?: number | null;
   is_active: boolean;
   is_superuser: boolean;
@@ -88,6 +89,8 @@ export interface Objet {
   contact_email?: string | null;
   recompense?: string | null;
   is_public: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface ObjetPayload {
@@ -103,6 +106,8 @@ export interface ObjetPayload {
   contact_email?: string;
   recompense?: string;
   is_public: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface ImageObjet {
@@ -130,11 +135,18 @@ export interface Promesse {
   date: string;
 }
 
+export interface TemoignageUser {
+  id: number;
+  username: string;
+}
+
 export interface Temoignage {
   id: number;
   objet_id: number;
   user_id: number;
+  user?: TemoignageUser | null;
   contenu: string;
+  rating: number;
   date: string;
 }
 

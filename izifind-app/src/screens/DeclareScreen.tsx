@@ -66,6 +66,24 @@ export function DeclareScreen() {
     derriere: null,
   });
 
+  if (!auth.isAuthenticated) {
+    return (
+      <AppScreen>
+        <Card style={styles.loginRequiredCard}>
+          <MaterialCommunityIcons name="lock-outline" size={28} color={colors.primary} />
+          <Text style={styles.loginRequiredTitle}>Connexion requise</Text>
+          <Text style={styles.loginRequiredText}>Connectez-vous pour déclarer un objet perdu ou trouvé.</Text>
+          <PrimaryButton
+            label="Se connecter"
+            onPress={() => router.replace('/login')}
+            icon="login"
+            size="lg"
+          />
+        </Card>
+      </AppScreen>
+    );
+  }
+
   const validateStep = () => {
     switch (currentStep) {
       case 1:
@@ -956,5 +974,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 12,
     elevation: 4,
+  },
+  loginRequiredCard: {
+    marginTop: spacing.xl,
+    padding: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  loginRequiredTitle: {
+    fontSize: fontSizes.lg,
+    fontWeight: fontWeights.bold,
+    color: colors.dark,
+  },
+  loginRequiredText: {
+    fontSize: fontSizes.sm,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

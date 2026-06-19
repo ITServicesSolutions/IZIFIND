@@ -4,13 +4,15 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors, radius, spacing, fontSizes, fontWeights } from '@/constants/theme';
 import type { Objet } from '@/types/api';
 import { formatDate } from '@/utils/format';
+import { shareObject } from '@/utils/share';
 
 interface Props {
   objet: Objet;
   onPress?: () => void;
+  onShare?: () => void;
 }
 
-export function AnnonceCard({ objet, onPress }: Props) {
+export function AnnonceCard({ objet, onPress, onShare }: Props) {
   const isLost = objet.statut_id === 1;
 
   // Determine category icon, label and color
@@ -72,6 +74,20 @@ export function AnnonceCard({ objet, onPress }: Props) {
       <View style={styles.detailsContainer}>
         <View style={styles.headerRow}>
           <Text style={[styles.category, { color: iconColor }]}>{categoryLabel}</Text>
+          <Pressable
+            style={styles.shareButton}
+            onPress={(event) => {
+              event.stopPropagation();
+              if (onShare) {
+                onShare();
+              } else {
+                shareObject(objet).catch(() => {});
+              }
+            }}
+            hitSlop={8}
+          >
+            <MaterialCommunityIcons name="share-variant-outline" size={14} color={colors.textMuted} />
+          </Pressable>
           {objet.recompense && (
             <View style={styles.rewardBadge}>
               <MaterialCommunityIcons name="gift-outline" size={10} color={colors.reward} />
@@ -157,13 +173,22 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: spacing.xs,
   },
   category: {
     fontSize: fontSizes.xs,
     fontWeight: fontWeights.bold,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
+    flex: 1,
+  },
+  shareButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.bgAlt,
   },
   rewardBadge: {
     flexDirection: 'row',
@@ -204,4 +229,3 @@ const styles = StyleSheet.create({
 });
 
 export default AnnonceCard;
-

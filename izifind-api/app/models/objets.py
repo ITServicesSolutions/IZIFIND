@@ -147,6 +147,7 @@ class Temoignage(Base):
     objet_id = Column(Integer, ForeignKey("objets.id"))
     user_id = Column(Integer, ForeignKey("users.id"))
     contenu = Column(Text, nullable=False)
+    rating = Column(Integer, nullable=False, default=5)
     date = Column(DateTime(timezone=True), server_default=func.now())
 
     objet = relationship("Objet", back_populates="temoignages")

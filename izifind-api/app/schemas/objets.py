@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime, date
 
@@ -236,19 +236,30 @@ class Promesse(PromesseBase):
 
 # ── Temoignage ─────────────────────────────────────────────
 
+class TestimonialUserSchema(BaseModel):
+    id: int
+    username: str
+
+    class Config:
+        from_attributes = True
+
 class TemoignageBase(BaseModel):
     objet_id: int
     contenu: str
+    rating: int = Field(ge=1, le=5)
 
 class TemoignageCreate(TemoignageBase):
     pass
 
 class TemoignageUpdate(BaseModel):
     contenu: Optional[str] = None
+    rating: Optional[int] = Field(default=None, ge=1, le=5)
 
 class Temoignage(TemoignageBase):
     id: int
     user_id: int
+    user: Optional[TestimonialUserSchema] = None
     date: datetime
     class Config:
         from_attributes = True
+

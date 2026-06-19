@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     SENDER_EMAIL: str = ""
     SENDER_NAME: str = "IZIFIND API"
     FRONTEND_URL: str = "http://localhost:3000"
+    GOOGLE_CLIENT_ID: str = ""
 
     @property
     def DATABASE_URL(self) -> str:

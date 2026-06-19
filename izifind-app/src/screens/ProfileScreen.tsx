@@ -46,6 +46,24 @@ export function ProfileScreen() {
     </View>
   );
 
+  if (!auth.isAuthenticated) {
+    return (
+      <AppScreen header={HeaderComponent}>
+        <Card style={styles.authCard}>
+          <View style={styles.authIconCircle}>
+            <MaterialCommunityIcons name="account-lock-outline" size={26} color={colors.primary} />
+          </View>
+          <Text style={styles.authTitle}>Connexion requise</Text>
+          <Text style={styles.authText}>Connectez-vous pour gérer votre profil et suivre vos déclarations.</Text>
+          <Pressable style={styles.authButton} onPress={() => router.push('/login')}>
+            <MaterialCommunityIcons name="login" size={18} color={colors.white} />
+            <Text style={styles.authButtonText}>Se connecter</Text>
+          </Pressable>
+        </Card>
+      </AppScreen>
+    );
+  }
+
   return (
     <AppScreen header={HeaderComponent}>
       <View style={styles.container}>
@@ -197,6 +215,46 @@ const styles = StyleSheet.create({
   container: {
     paddingTop: spacing.sm,
     gap: spacing.lg,
+  },
+  authCard: {
+    marginTop: spacing.xl,
+    padding: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  authIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.pastel.orange,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  authTitle: {
+    fontSize: fontSizes.lg,
+    fontWeight: fontWeights.bold,
+    color: colors.dark,
+  },
+  authText: {
+    fontSize: fontSizes.sm,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  authButton: {
+    height: 44,
+    borderRadius: radius.md,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+  },
+  authButtonText: {
+    color: colors.white,
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.bold,
   },
   profileHeader: {
     alignItems: 'center',

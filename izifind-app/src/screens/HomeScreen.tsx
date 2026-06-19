@@ -1,22 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Image, Pressable, ActivityIndicator, Alert } from 'react-native';
+import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import { StyleSheet, Text, View, Image, Pressable, ActivityIndicator, Alert, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppScreen } from '@/components/AppScreen';
 import { Card } from '@/components/Card';
+import { AnnonceCard } from '@/components/AnnonceCard';
+import { EmptyState } from '@/components/EmptyState';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SearchBar } from '@/components/SearchBar';
 import { StatBadge } from '@/components/StatBadge';
 import { colors, radius, spacing, fontSizes, fontWeights } from '@/constants/theme';
 import { useAuth } from '@/auth/AuthContext';
-import { getStatistics } from '@/services/catalog';
+import { getObjects, getStatistics } from '@/services/catalog';
+import type { Objet } from '@/types/api';
+import { normalizeText } from '@/utils/format';
 
 export function HomeScreen() {
   const router = useRouter();
   const { isAuthenticated, isAdmin, user } = useAuth();
   const [stats, setStats] = useState({ perdus: 0, trouves: 0, postes: 0 });
   const [loadingStats, setLoadingStats] = useState(true);
+  const [recentItems, setRecentItems] = useState<Objet[]>([]);
+  const [loadingFeed, setLoadingFeed] = useState(true);
+  const [feedError, setFeedError] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     let mounted = true;
@@ -32,6 +40,54 @@ export function HomeScreen() {
     })();
     return () => { mounted = false; };
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await getObjects({ limit: 12 });
+        if (mounted) setRecentItems(data);
+      } catch {
+        if (mounted) setFeedError('Impossible de charger les déclarations récentes.');
+      } finally {
+        if (mounted) setLoadingFeed(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  const filteredItems = useMemo(() => {
+    const needle = normalizeText(query);
+    if (!needle) return recentItems;
+    return recentItems.filter((item) => normalizeText(`${item.description} ${item.lieu ?? ''}`).includes(needle));
+  }, [query, recentItems]);
+
+  // ── Feed entry animation ────────────────────────────────
+  const feedAnimations = useRef<Animated.Value[]>([]).current;
+
+  // Grow the anim-value pool whenever filteredItems grows
+  useEffect(() => {
+    while (feedAnimations.length < filteredItems.length) {
+      feedAnimations.push(new Animated.Value(0));
+    }
+  }, [filteredItems.length, feedAnimations]);
+
+  // Stagger animate when the feed loads
+  useEffect(() => {
+    if (!loadingFeed && filteredItems.length > 0) {
+      // Reset
+      feedAnimations.forEach((a) => a.setValue(0));
+      const staggered = filteredItems.map((_, i) =>
+        Animated.timing(feedAnimations[i] ?? new Animated.Value(1), {
+          toValue: 1,
+          duration: 380,
+          delay: i * 70,
+          useNativeDriver: true,
+        }),
+      );
+      Animated.stagger(0, staggered).start();
+    }
+  }, [loadingFeed, filteredItems, feedAnimations]);
 
   const handleSearchPress = () => {
     router.push('/catalog');
@@ -73,8 +129,8 @@ export function HomeScreen() {
           <Text style={styles.heroTitle}>Objets perdus ou trouvés ?</Text>
           <Text style={styles.heroSubtitle}>Déclarez-les en moins de 2 minutes pour accélérer les recherches.</Text>
           <PrimaryButton 
-            label="Déclarer un objet" 
-            onPress={() => router.push('/declare')} 
+            label={isAuthenticated ? 'Déclarer un objet' : 'Se connecter pour déclarer'} 
+            onPress={() => router.push(isAuthenticated ? '/declare?type=lost' : '/login')} 
             variant="secondary"
             size="sm"
             pill
@@ -87,12 +143,7 @@ export function HomeScreen() {
         </View>
       </View>
 
-      {/* Search Bar (Clickable) */}
-      <Pressable onPress={handleSearchPress} style={styles.searchPressable}>
-        <View pointerEvents="none">
-          <SearchBar value="" onChangeText={() => {}} placeholder="Rechercher un objet perdu..." />
-        </View>
-      </Pressable>
+      <SearchBar value={query} onChangeText={setQuery} placeholder="Rechercher dans les déclarations récentes..." />
 
       {/* Quick Access Grid (2x2) */}
       <SectionHeader title="Accès rapides" subtitle="Les raccourcis essentiels pour naviguer." />
@@ -105,7 +156,7 @@ export function HomeScreen() {
           <Text style={styles.gridDesc}>Consulter les objets signalés</Text>
         </Pressable>
 
-        <Pressable style={styles.gridCard} onPress={() => router.push('/declare')}>
+        <Pressable style={styles.gridCard} onPress={() => router.push(isAuthenticated ? '/declare?type=lost' : '/login')}>
           <View style={[styles.gridIconCircle, { backgroundColor: colors.pastel.purple }]}>
             <MaterialCommunityIcons name="plus-circle-outline" size={24} color="#A882FF" />
           </View>
@@ -155,6 +206,45 @@ export function HomeScreen() {
         </View>
       )}
 
+      <SectionHeader title="Déclarations récentes" subtitle="Objets publics signalés par la communauté." />
+      <View style={styles.feed}>
+        {loadingFeed ? (
+          <View style={styles.feedState}>
+            <ActivityIndicator color={colors.primary} />
+            <Text style={styles.feedStateText}>Chargement des annonces...</Text>
+          </View>
+        ) : feedError ? (
+          <InlineFeedNotice message={feedError} />
+        ) : filteredItems.length === 0 ? (
+          <EmptyState
+            icon="database-search"
+            title="Aucune déclaration"
+            description="Aucune annonce publique ne correspond à votre recherche."
+            actionLabel="Voir le catalogue"
+            onAction={() => router.push('/catalog')}
+          />
+        ) : (
+          filteredItems.map((item, index) => {
+            const anim = feedAnimations[index];
+            const animOpacity = anim ? anim : new Animated.Value(1);
+            const animTranslateY = anim
+              ? anim.interpolate({ inputRange: [0, 1], outputRange: [18, 0] })
+              : 0;
+            return (
+              <Animated.View
+                key={item.id}
+                style={{ opacity: animOpacity, transform: [{ translateY: animTranslateY }] }}
+              >
+                <AnnonceCard
+                  objet={item}
+                  onPress={() => router.push(`/object/${item.id}`)}
+                />
+              </Animated.View>
+            );
+          })
+        )}
+      </View>
+
       {/* Statistics Section */}
       <SectionHeader title="Statistiques" subtitle="Activité globale de la communauté." />
       <View style={styles.statsRow}>
@@ -187,6 +277,15 @@ export function HomeScreen() {
         )}
       </View>
     </AppScreen>
+  );
+}
+
+function InlineFeedNotice({ message }: { message: string }) {
+  return (
+    <Card style={styles.feedNotice}>
+      <MaterialCommunityIcons name="alert-circle-outline" size={18} color={colors.lost} />
+      <Text style={styles.feedNoticeText}>{message}</Text>
+    </Card>
   );
 }
 
@@ -292,6 +391,31 @@ const styles = StyleSheet.create({
   searchPressable: {
     marginBottom: spacing.xs,
   },
+  feed: {
+    gap: spacing.xs,
+  },
+  feedState: {
+    backgroundColor: colors.white,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  feedStateText: {
+    color: colors.textMuted,
+    fontSize: fontSizes.sm,
+  },
+  feedNotice: {
+    padding: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  feedNoticeText: {
+    flex: 1,
+    color: colors.dark,
+    fontSize: fontSizes.sm,
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -367,5 +491,3 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
 });
-
-

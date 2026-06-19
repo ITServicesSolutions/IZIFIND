@@ -31,7 +31,6 @@ def get_objets(
     marque: Optional[int] = Query(None, description="Filtrer par marque"),
     couleur: Optional[int] = Query(None, description="Filtrer par couleur"),
     statut: Optional[int] = Query(None, description="Filtrer par statut"),
-    is_public: Optional[bool] = Query(None, description="Filtrer par visibilité"),
     search: Optional[str] = Query(None, description="Recherche texte dans la description"),
     db: Session = Depends(get_db),
 ):
@@ -47,11 +46,9 @@ def get_objets(
         query = query.filter(Objet.couleur_id == couleur)
     if statut is not None:
         query = query.filter(Objet.statut_id == statut)
-    if is_public is not None:
-        query = query.filter(Objet.is_public == is_public)
-    else:
-        # Par défaut, ne montrer que les objets publics
-        query = query.filter(Objet.is_public == True)
+    # Endpoint public : toujours filtrer sur les objets publics uniquement.
+    # Pour accéder aux objets privés, utiliser /recherche/avancee (AUTH requise).
+    query = query.filter(Objet.is_public == True)
     if search:
         query = query.filter(
             or_(
@@ -60,7 +57,7 @@ def get_objets(
             )
         )
 
-    return query.offset(skip).limit(limit).all()
+    return query.order_by(Objet.date.desc(), Objet.id.desc()).offset(skip).limit(limit).all()
 
 
 @router.post(
@@ -195,4 +192,4 @@ def recherche_avancee(
             )
         )
 
-    return query.offset(skip).limit(limit).all()
+    return query.order_by(Objet.date.desc(), Objet.id.desc()).offset(skip).limit(limit).all()

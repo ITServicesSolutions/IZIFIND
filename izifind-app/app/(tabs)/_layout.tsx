@@ -1,6 +1,6 @@
 import React from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors, radius, spacing } from '@/constants/theme';
 import { useAuth } from '@/auth/AuthContext';
@@ -27,6 +27,7 @@ function CustomDeclareButton({ children, onPress }: any) {
 
 export default function TabLayout() {
   const auth = useAuth();
+  const router = useRouter();
 
   return (
     <Tabs
@@ -55,11 +56,22 @@ export default function TabLayout() {
         name="declare"
         options={{
           title: 'Déclarer',
-          tabBarButton: (props) => <CustomDeclareButton {...props} />,
+          tabBarButton: (props) => (
+            <CustomDeclareButton
+              {...props}
+              onPress={() => router.push(auth.isAuthenticated ? '/declare?type=lost' : '/login')}
+            />
+          ),
         }}
       />
       <Tabs.Screen name="map" options={{ title: 'Carte', tabBarIcon: icon('map-marker-outline') }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profil', tabBarIcon: icon('account-circle-outline') }} />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: auth.isAuthenticated ? 'Profil' : 'Connexion',
+          tabBarIcon: icon(auth.isAuthenticated ? 'account-circle-outline' : 'login'),
+        }}
+      />
       <Tabs.Screen
         name="admin"
         options={{
@@ -101,4 +113,3 @@ const styles = StyleSheet.create({
     borderColor: colors.white,
   },
 });
-

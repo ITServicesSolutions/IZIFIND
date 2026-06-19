@@ -38,6 +38,7 @@ class Role(RoleBase):
 class UserBase(BaseModel):
     username: str
     email: EmailStr
+    phone: Optional[str] = None
     commissariat_id: Optional[int] = None
 
 class UserCreate(UserBase):
@@ -55,6 +56,7 @@ class User(UserBase):
 class UserUpdate(BaseModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
+    phone: Optional[str] = None
     is_active: Optional[bool] = None
     is_superuser: Optional[bool] = None
     commissariat_id: Optional[int] = None
@@ -73,3 +75,6 @@ class ForgotPasswordRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str
+
+class GoogleAuthRequest(BaseModel):
+    id_token: str

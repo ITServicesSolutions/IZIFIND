@@ -18,11 +18,12 @@ import { InlineNotice } from '@/components/InlineNotice';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SectionHeader } from '@/components/SectionHeader';
 import { colors, radius, spacing, fontSizes, fontWeights } from '@/constants/theme';
-import { getImages, getObjectById, getStatuts, transmettreObjet, validerObjet } from '@/services/catalog';
+import { getImages, getObjectById, getStatuts, getTemoignages, transmettreObjet, validerObjet } from '@/services/catalog';
 import { createTemoignage } from '@/services/community';
 import { useAuth } from '@/auth/AuthContext';
-import type { ImageObjet, Objet, Statut } from '@/types/api';
+import type { ImageObjet, Objet, Statut, Temoignage } from '@/types/api';
 import { formatDate } from '@/utils/format';
+import { shareObject } from '@/utils/share';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const GALLERY_HEIGHT = 240;
@@ -37,6 +38,8 @@ export function ObjectDetailScreen() {
   const [statuts, setStatuts] = useState<Statut[]>([]);
   const [loading, setLoading] = useState(true);
   const [note, setNote] = useState('');
+  const [rating, setRating] = useState(5);
+  const [temoignages, setTemoignages] = useState<Temoignage[]>([]);
   const [sending, setSending] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [actionLoading, setActionLoading] = useState(false);
@@ -46,15 +49,17 @@ export function ObjectDetailScreen() {
 
     (async () => {
       try {
-        const [detail, allImages, statusList] = await Promise.all([
+        const [detail, allImages, statusList, allTemoignages] = await Promise.all([
           getObjectById(Number(id)),
           getImages(),
           getStatuts(),
+          getTemoignages(),
         ]);
         if (!mounted) return;
         setObjet(detail);
         setImages(allImages.filter((image) => image.objet_id === detail.id));
         setStatuts(statusList);
+        setTemoignages(allTemoignages.filter(t => t.objet_id === detail.id));
       } finally {
         if (mounted) {
           setLoading(false);
@@ -144,8 +149,11 @@ export function ObjectDetailScreen() {
 
     setSending(true);
     try {
-      await createTemoignage(objet.id, note.trim());
+      await createTemoignage(objet.id, note.trim(), rating);
+      const allTemoignages = await getTemoignages();
+      setTemoignages(allTemoignages.filter(t => t.objet_id === objet.id));
       setNote('');
+      setRating(5);
       Alert.alert('Succès', 'Votre témoignage a bien été envoyé.');
     } catch (err: any) {
       Alert.alert('Erreur', err?.response?.data?.detail || 'Impossible de soumettre le témoignage.');
@@ -174,7 +182,9 @@ export function ObjectDetailScreen() {
         <MaterialCommunityIcons name="arrow-left" size={22} color={colors.dark} />
       </Pressable>
       <Text style={styles.headerTitle}>Détail de l'objet</Text>
-      <View style={{ width: 40 }} />
+      <Pressable onPress={() => shareObject(objet)} style={styles.shareButton}>
+        <MaterialCommunityIcons name="share-variant" size={22} color={colors.dark} />
+      </Pressable>
     </View>
   );
 
@@ -304,6 +314,35 @@ export function ObjectDetailScreen() {
 
       {/* Testimonial Section */}
       <SectionHeader title="Témoignage" subtitle="Partagez votre retour d'expérience." />
+      
+      {/* List of existing testimonials */}
+      {temoignages.length > 0 && (
+        <View style={styles.testimonialsList}>
+          {temoignages.map((t) => (
+            <Card key={t.id} style={styles.testimonyItemCard}>
+              <View style={styles.testimonyItemHeader}>
+                <View style={styles.testimonyItemUserWrapper}>
+                  <MaterialCommunityIcons name="account-circle" size={24} color={colors.primary} />
+                  <Text style={styles.testimonyItemUser}>{t.user?.username || `Utilisateur ${t.user_id}`}</Text>
+                </View>
+                <View style={styles.testimonyStarsList}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <MaterialCommunityIcons
+                      key={star}
+                      name={star <= t.rating ? 'star' : 'star-outline'}
+                      size={16}
+                      color={colors.reward}
+                    />
+                  ))}
+                </View>
+              </View>
+              <Text style={styles.testimonyItemContent}>{t.contenu}</Text>
+              <Text style={styles.testimonyItemDate}>{formatDate(t.date)}</Text>
+            </Card>
+          ))}
+        </View>
+      )}
+
       {canPostTestimonial ? (
         <Card style={styles.testimonyCard}>
           <View style={styles.testimonyHeader}>
@@ -312,6 +351,19 @@ export function ObjectDetailScreen() {
             </View>
             <Text style={styles.testimonyTitle}>Votre retour</Text>
           </View>
+          
+          <View style={styles.ratingSelector}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Pressable key={star} onPress={() => setRating(star)} style={styles.starButton}>
+                <MaterialCommunityIcons
+                  name={star <= rating ? 'star' : 'star-outline'}
+                  size={32}
+                  color={colors.reward}
+                />
+              </Pressable>
+            ))}
+          </View>
+
           <TextInput
             style={styles.textarea}
             value={note}
@@ -328,10 +380,23 @@ export function ObjectDetailScreen() {
             size="lg"
           />
         </Card>
+      ) : statusLabel.toUpperCase().includes('TROUVE') ? (
+        <Card style={styles.guestNoticeCard}>
+          <View style={styles.guestNoticeIcon}>
+            <MaterialCommunityIcons name="lock-outline" size={24} color={colors.primary} />
+          </View>
+          <Text style={styles.guestNoticeTitle}>Connectez-vous pour témoigner</Text>
+          <Text style={styles.guestNoticeDesc}>Vous devez être connecté pour laisser un avis sur cette restitution.</Text>
+          <PrimaryButton
+            label="Me connecter"
+            onPress={() => router.push('/login')}
+            variant="secondary"
+          />
+        </Card>
       ) : (
         <InlineNotice
           tone="info"
-          message="Les témoignages sont activés pour les objets retrouvés une fois votre session ouverte."
+          message="Les témoignages sont activés pour les objets retrouvés."
         />
       )}
     </AppScreen>
@@ -365,6 +430,14 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.lg,
     fontWeight: fontWeights.bold,
     color: colors.dark,
+  },
+  shareButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.pastel.blue,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   /* Gallery */
@@ -600,5 +673,79 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontStyle: 'italic',
     textAlign: 'center',
+  },
+  ratingSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+  },
+  starButton: {
+    padding: 4,
+  },
+  testimonialsList: {
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  testimonyItemCard: {
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  testimonyItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  testimonyItemUserWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  testimonyItemUser: {
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.bold,
+    color: colors.dark,
+  },
+  testimonyStarsList: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  testimonyItemContent: {
+    fontSize: fontSizes.sm,
+    color: colors.dark,
+    lineHeight: 20,
+  },
+  testimonyItemDate: {
+    fontSize: fontSizes.xs,
+    color: colors.textMuted,
+  },
+  guestNoticeCard: {
+    padding: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.pastel.orange,
+    borderWidth: 1,
+    borderColor: 'rgba(244, 149, 23, 0.2)',
+  },
+  guestNoticeIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  guestNoticeTitle: {
+    fontSize: fontSizes.md,
+    fontWeight: fontWeights.bold,
+    color: colors.dark,
+    textAlign: 'center',
+  },
+  guestNoticeDesc: {
+    fontSize: fontSizes.sm,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
   },
 });

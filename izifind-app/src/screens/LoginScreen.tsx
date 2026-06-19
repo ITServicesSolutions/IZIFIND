@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, StyleSheet, Text, View, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
 import { AppScreen } from '@/components/AppScreen';
 import { Card } from '@/components/Card';
 import { Input } from '@/components/Input';
@@ -10,13 +12,36 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { colors, spacing, fontSizes, fontWeights, radius } from '@/constants/theme';
 import { useAuth } from '@/auth/AuthContext';
 
+WebBrowser.maybeCompleteAuthSession();
+
 export function LoginScreen() {
   const router = useRouter();
   const auth = useAuth();
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('admin');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const googleClientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
+  const [googleRequest, googleResponse, promptGoogleAsync] = Google.useIdTokenAuthRequest({
+    clientId: googleClientId,
+  });
+
+  useEffect(() => {
+    if (googleResponse?.type !== 'success') return;
+    const idToken = googleResponse.params.id_token;
+    if (!idToken) {
+      setError('Google n\'a pas retourné de jeton de connexion.');
+      return;
+    }
+
+    setError(null);
+    setGoogleLoading(true);
+    auth.loginWithGoogleToken(idToken)
+      .then(() => router.replace('/'))
+      .catch((err: any) => setError(err?.response?.data?.detail || 'Connexion Google impossible pour le moment.'))
+      .finally(() => setGoogleLoading(false));
+  }, [auth, googleResponse, router]);
 
   const handleSubmit = async () => {
     setError(null);
@@ -58,10 +83,10 @@ export function LoginScreen() {
           {/* Form Card */}
           <Card style={styles.card}>
             <Input
-              label="Nom d'utilisateur"
+              label="Téléphone, email ou username"
               value={username}
               onChangeText={setUsername}
-              placeholder="admin"
+              placeholder="+33100000001 ou admin"
               leftIcon="account-outline"
             />
             <Input
@@ -83,6 +108,17 @@ export function LoginScreen() {
               icon="login"
               style={styles.submitBtn}
             />
+
+            <Pressable
+              style={[styles.googleButton, (!googleClientId || !googleRequest || googleLoading) && styles.googleButtonDisabled]}
+              disabled={!googleClientId || !googleRequest || googleLoading}
+              onPress={() => promptGoogleAsync()}
+            >
+              <MaterialCommunityIcons name="google" size={18} color={colors.dark} />
+              <Text style={styles.googleButtonText}>
+                {googleLoading ? 'Connexion Google...' : 'Continuer avec Google'}
+              </Text>
+            </Pressable>
             
             <Pressable onPress={() => router.push('/forgot-password')} hitSlop={8} style={styles.forgotPasswordContainer}>
               <Text style={styles.forgotPasswordText}>Mot de passe oublié ?</Text>
@@ -159,6 +195,25 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     marginTop: spacing.xs,
+  },
+  googleButton: {
+    height: 48,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(21, 26, 49, 0.08)',
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  googleButtonDisabled: {
+    opacity: 0.48,
+  },
+  googleButtonText: {
+    color: colors.dark,
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.bold,
   },
   bottomRow: {
     flexDirection: 'row',

@@ -26,7 +26,20 @@
       "output": "static"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Autoriser IZIFIND à accéder au microphone pour la recherche vocale.",
+          "speechRecognitionPermission": "Autoriser IZIFIND à utiliser la reconnaissance vocale."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Autoriser IZIFIND à utiliser votre position pour afficher les objets perdus autour de vous."
+        }
+      ]
     ]
   }
 }

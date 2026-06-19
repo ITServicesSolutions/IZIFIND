@@ -16,6 +16,7 @@ export function RegisterScreen() {
   const [form, setForm] = useState({
     username: '',
     email: '',
+    phone: '',
     password: '',
   });
   const [loading, setLoading] = useState(false);
@@ -77,6 +78,14 @@ export function RegisterScreen() {
               keyboardType="email-address"
               placeholder="Ex: jean.dupont@email.com"
               leftIcon="email-outline"
+            />
+            <Input
+              label="Téléphone"
+              value={form.phone}
+              onChangeText={(value) => update('phone', value)}
+              keyboardType="phone-pad"
+              placeholder="Ex: +33100000003"
+              leftIcon="phone-outline"
             />
             <Input
               label="Mot de passe"

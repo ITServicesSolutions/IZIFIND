@@ -17,7 +17,7 @@ router = APIRouter(prefix="/api", tags=["Témoignages"])
     description="Renvoie tous les témoignages laissés par les utilisateurs."
 )
 def get_temoignages(db: Session = Depends(get_db)):
-    return db.query(Temoignage).all()
+    return db.query(Temoignage).order_by(Temoignage.date.desc(), Temoignage.id.desc()).all()
 
 @router.post(
     "/temoignages",
@@ -43,7 +43,8 @@ def create_temoignage(
     new_temoignage = Temoignage(
         objet_id=tem_in.objet_id,
         user_id=current_user.id,
-        contenu=tem_in.contenu
+        contenu=tem_in.contenu,
+        rating=tem_in.rating,
     )
     db.add(new_temoignage)
     db.commit()
@@ -95,6 +96,7 @@ def update_temoignage(
         )
     
     temoignage.contenu = tem_in.contenu
+    temoignage.rating = tem_in.rating
     db.add(temoignage)
     db.commit()
     db.refresh(temoignage)
@@ -126,6 +128,9 @@ def patch_temoignage(
     
     if tem_in.contenu is not None:
         temoignage.contenu = tem_in.contenu
+
+    if tem_in.rating is not None:
+        temoignage.rating = tem_in.rating
     
     db.add(temoignage)
     db.commit()
