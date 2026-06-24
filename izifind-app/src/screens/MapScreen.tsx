@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View, Platform, Linking, Share, Alert } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View, Platform, Linking, Share, Alert } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import { AppScreen } from '@/components/AppScreen';
 import { Card } from '@/components/Card';
 import { InlineNotice } from '@/components/InlineNotice';
+import { SearchBar } from '@/components/SearchBar';
 import { colors, radius, spacing, fontSizes, fontWeights } from '@/constants/theme';
 import { getCommissariats } from '@/services/catalog';
 import type { Commissariat } from '@/types/api';
@@ -106,9 +107,6 @@ export function MapScreen() {
     if (url) Linking.openURL(url);
   };
 
-  const handleCall = () => {
-    Alert.alert('Contact', 'Le numéro de ce commissariat n\'est pas renseigné dans la base de données.');
-  };
 
   const handleShare = async (station: Commissariat) => {
     try {
@@ -209,10 +207,6 @@ export function MapScreen() {
                     <MaterialCommunityIcons name="navigation-variant-outline" size={16} color={colors.primary} />
                     <Text style={styles.detailActionText}>Itinéraire</Text>
                   </Pressable>
-                  <Pressable style={styles.detailActionBtn} onPress={handleCall}>
-                    <MaterialCommunityIcons name="phone-outline" size={16} color={colors.primary} />
-                    <Text style={styles.detailActionText}>Contacter</Text>
-                  </Pressable>
                   <Pressable style={styles.detailActionBtn} onPress={() => handleShare(selectedStation)}>
                     <MaterialCommunityIcons name="share-variant-outline" size={16} color={colors.primary} />
                     <Text style={styles.detailActionText}>Partager</Text>
@@ -231,19 +225,11 @@ export function MapScreen() {
                 <Text style={styles.directoryCount}>{filteredStations.length} résultat{filteredStations.length > 1 ? 's' : ''}</Text>
               </View>
               <View style={styles.searchWrapper}>
-                <MaterialCommunityIcons name="magnify" size={18} color={colors.textMuted} style={styles.searchIcon} />
-                <TextInput
-                  style={styles.searchInput}
+                <SearchBar
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                   placeholder="Rechercher par nom ou adresse..."
-                  placeholderTextColor="rgba(21, 26, 49, 0.38)"
                 />
-                {searchQuery.length > 0 && (
-                  <Pressable onPress={() => setSearchQuery('')} hitSlop={8}>
-                    <MaterialCommunityIcons name="close-circle" size={16} color={colors.textMuted} />
-                  </Pressable>
-                )}
               </View>
 
               <FlatList
@@ -562,23 +548,7 @@ const styles = StyleSheet.create({
     fontWeight: fontWeights.medium,
   },
   searchWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(21, 26, 49, 0.06)',
-    borderRadius: radius.md,
-    backgroundColor: colors.bgAlt,
-    paddingHorizontal: spacing.md,
-    height: 42,
-  },
-  searchIcon: {
-    marginRight: spacing.xs,
-  },
-  searchInput: {
-    flex: 1,
-    height: '100%',
-    color: colors.dark,
-    fontSize: fontSizes.sm,
+    marginBottom: spacing.sm,
   },
   list: {
     gap: 0,

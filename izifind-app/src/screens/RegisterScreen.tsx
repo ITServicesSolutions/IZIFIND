@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, StyleSheet, Text, View, Pressable } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Image, KeyboardAvoidingView, Platform, StyleSheet, Text, View, Pressable, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
 import { AppScreen } from '@/components/AppScreen';
 import { Card } from '@/components/Card';
 import { Input } from '@/components/Input';
@@ -9,6 +11,8 @@ import { InlineNotice } from '@/components/InlineNotice';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { colors, spacing, fontSizes, fontWeights, radius } from '@/constants/theme';
 import { useAuth } from '@/auth/AuthContext';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export function RegisterScreen() {
   const router = useRouter();
@@ -20,7 +24,35 @@ export function RegisterScreen() {
     password: '',
   });
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const googleClientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
+  const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || googleClientId || 'unconfigured';
+  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || googleClientId || 'unconfigured';
+
+  const [googleRequest, googleResponse, promptGoogleAsync] = Google.useIdTokenAuthRequest({
+    clientId: googleClientId || 'unconfigured',
+    androidClientId,
+    iosClientId,
+  });
+
+  useEffect(() => {
+    if (googleResponse?.type !== 'success') return;
+    const idToken = googleResponse.params.id_token;
+    if (!idToken) {
+      setError("Google n'a pas retourné de jeton de connexion.");
+      return;
+    }
+
+    setError(null);
+    setGoogleLoading(true);
+    auth.loginWithGoogleToken(idToken)
+      .then(() => router.replace('/'))
+      .catch((err: any) => setError(err?.response?.data?.detail || "Inscription Google impossible pour le moment."))
+      .finally(() => setGoogleLoading(false));
+  }, [auth, googleResponse, router]);
+
 
   const update = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
@@ -106,6 +138,23 @@ export function RegisterScreen() {
               icon="account-check"
               style={styles.submitBtn}
             />
+
+            <Pressable
+              style={[styles.googleButton, (!googleClientId || !googleRequest || googleLoading) && styles.googleButtonDisabled]}
+              disabled={!googleClientId || !googleRequest || googleLoading}
+              onPress={() => {
+                if (googleClientId?.startsWith('dummy-')) {
+                  Alert.alert("Configuration Manquante", "Le bouton SSO Google est activé, mais nécessite un vrai Client ID Google dans le fichier .env pour fonctionner.");
+                } else {
+                  promptGoogleAsync();
+                }
+              }}
+            >
+              <MaterialCommunityIcons name="google" size={18} color={colors.dark} />
+              <Text style={styles.googleButtonText}>
+                {googleLoading ? 'Inscription Google...' : 'S\'inscrire avec Google'}
+              </Text>
+            </Pressable>
           </Card>
 
           {/* Bottom Link */}
@@ -178,6 +227,26 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     marginTop: spacing.xs,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.bgAlt,
+    paddingVertical: 14,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(21, 26, 49, 0.08)',
+    marginTop: spacing.xs,
+  },
+  googleButtonDisabled: {
+    opacity: 0.5,
+  },
+  googleButtonText: {
+    color: colors.dark,
+    fontSize: fontSizes.sm,
+    fontWeight: fontWeights.bold,
   },
   bottomRow: {
     flexDirection: 'row',

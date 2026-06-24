@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import List, Optional
 
 class Token(BaseModel):
@@ -37,7 +37,7 @@ class Role(RoleBase):
 
 class UserBase(BaseModel):
     username: str
-    email: EmailStr
+    email: str
     phone: Optional[str] = None
     commissariat_id: Optional[int] = None
 
@@ -55,7 +55,7 @@ class User(UserBase):
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     phone: Optional[str] = None
     is_active: Optional[bool] = None
     is_superuser: Optional[bool] = None
@@ -70,7 +70,7 @@ class ChangePassword(BaseModel):
     new_password: str
 
 class ForgotPasswordRequest(BaseModel):
-    email: EmailStr
+    email: str
 
 class ResetPasswordRequest(BaseModel):
     token: str

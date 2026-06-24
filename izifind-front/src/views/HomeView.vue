@@ -35,6 +35,11 @@
               <div class="input-with-icon">
                 <svg viewBox="0 0 24 24" class="field-icon"><circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="1.8" /><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="1.8" /></svg>
                 <input id="search-input" v-model="searchQuery" type="text" placeholder="Ex: Clés, téléphone..." class="form-control" />
+                <button type="button" class="btn-voice" @click="toggleVoiceSearch" :class="{ listening: isListening }">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/>
+                  </svg>
+                </button>
               </div>
             </div>
             
@@ -124,7 +129,7 @@
             <span class="stat-label">Taux de restitution</span>
           </div>
           <div class="stat-card">
-            <span class="stat-number">20</span>
+            <span class="stat-number">{{ dynamicStats.partners }}</span>
             <span class="stat-label">Partenaires officiels</span>
           </div>
         </div>
@@ -215,7 +220,8 @@ import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { getObjects } from '../services/objets'
 import { getCategories } from '../services/categories'
-import type { ObjectRecord, Category } from '../services/types'
+import { getStatistics } from '../services/statistics'
+import type { ObjectRecord, Category, Statistics } from '../services/types'
 import AnnonceCard from '../components/AnnonceCard.vue'
 
 // Import legacy partner assets
@@ -230,6 +236,7 @@ const router = useRouter()
 
 const objects = ref<ObjectRecord[]>([])
 const categories = ref<Category[]>([])
+const statistics = ref<Statistics | null>(null)
 const loading = ref(true)
 
 // Search fields
@@ -237,43 +244,78 @@ const searchQuery = ref('')
 const selectedCategory = ref<number | null>(null)
 const locationQuery = ref('')
 
+// Voice search
+const isListening = ref(false)
+const recognition = ref<any>(null)
+
 // Modal state
 const selectedObject = ref<ObjectRecord | null>(null)
 
 const latestObjects = computed(() => {
   // Return the 6 most recent public objects
-  return [...objects.value]
-    .sort((a, b) => new Date(b.date_action).getTime() - new Date(a.date_action).getTime())
-    .slice(0, 6)
+  return [...objects.value].slice(0, 6)
 })
 
 const dynamicStats = computed(() => {
-  const total = objects.value.length
-  const found = objects.value.filter(o => o.statut_id === 2 || o.statut_id === 3).length
-  
-  // Dynamic return rate calculation or default mock percentage if no data
-  const returnRate = total > 0 ? Math.round((found / total) * 100) : 80
-
   return {
-    declared: total > 0 ? total + 120 : 542, // Seed default offset for visually premium look
-    returnRate: returnRate > 0 ? returnRate : 82
+    declared: statistics.value ? statistics.value.perdus + statistics.value.trouves : 542,
+    returnRate: 82, // Default value since we don't have exact restitution data yet
+    partners: statistics.value?.postes || 20
   }
 })
 
 onMounted(async () => {
+  // Initialize speech recognition if available
+  if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    recognition.value = new SpeechRecognition()
+    recognition.value.continuous = false
+    recognition.value.interimResults = false
+    recognition.value.lang = 'fr-FR'
+
+    recognition.value.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript
+      searchQuery.value = transcript
+      isListening.value = false
+    }
+
+    recognition.value.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error)
+      isListening.value = false
+    }
+
+    recognition.value.onend = () => {
+      isListening.value = false
+    }
+  }
+
   try {
-    const [objsData, catsData] = await Promise.all([
-      getObjects(),
-      getCategories()
+    const [objsData, catsData, statsData] = await Promise.all([
+      getObjects({ limit: 6 }),
+      getCategories(),
+      getStatistics()
     ])
     objects.value = objsData
     categories.value = catsData
+    statistics.value = statsData
   } catch (err) {
     console.error('Error loading home data:', err)
   } finally {
     loading.value = false
   }
 })
+
+const toggleVoiceSearch = () => {
+  if (!recognition.value) return
+
+  if (isListening.value) {
+    recognition.value.stop()
+    isListening.value = false
+  } else {
+    recognition.value.start()
+    isListening.value = true
+  }
+}
 
 const handleSearch = () => {
   router.push({
@@ -404,6 +446,44 @@ const closeDetailModal = () => {
   height: 16px;
   color: var(--color-text-muted);
   flex-shrink: 0;
+}
+
+.btn-voice {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.btn-voice:hover {
+  background: rgba(92, 214, 192, 0.1);
+  color: var(--color-primary);
+}
+
+.btn-voice.listening {
+  color: var(--color-primary);
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+.btn-voice svg {
+  width: 20px;
+  height: 20px;
 }
 
 .search-field .form-control {

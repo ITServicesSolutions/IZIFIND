@@ -3,15 +3,25 @@ import { StyleSheet, TextInput, View, Pressable, Animated, Platform } from 'reac
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors, radius, spacing, fontSizes } from '@/constants/theme';
 
+// ── Safe, conditional import of expo-speech-recognition ─────────────
+// The native module only exists after a dev-build (prebuild).  When running
+// inside Expo Go the module is absent and the static import crashes the
+// whole app.  We therefore try/catch at the module level and fall back to
+// no-ops so the rest of the SearchBar still renders normally.
 let ExpoSpeechRecognitionModule: any = null;
-let useSpeechRecognitionEvent: any = null;
+let useSpeechRecognitionEvent: ((event: string, handler: (...args: any[]) => void) => void) | null = null;
 
 try {
-  const speechModule = require('expo-speech-recognition');
-  ExpoSpeechRecognitionModule = speechModule.ExpoSpeechRecognitionModule;
-  useSpeechRecognitionEvent = speechModule.useSpeechRecognitionEvent;
+  const mod = require('expo-speech-recognition');
+  ExpoSpeechRecognitionModule = mod.ExpoSpeechRecognitionModule;
+  useSpeechRecognitionEvent = mod.useSpeechRecognitionEvent;
 } catch {
-  // expo-speech-recognition not installed — voice button hidden
+  // Module not available — speech recognition will be silently disabled.
+}
+
+// No-op hook used when the real module is not available
+function useNoOpSpeechEvent(_event: string, _handler: (...args: any[]) => void) {
+  // intentionally empty
 }
 
 interface Props {
@@ -26,6 +36,10 @@ export function SearchBar({ value, onChangeText, placeholder = 'Rechercher un ob
   const [isListening, setIsListening] = useState(false);
   const [voiceAvailable, setVoiceAvailable] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Pick the real hook or the no-op — must be resolved at the top of the
+  // component so the same hook is always called on every render (rules of hooks).
+  const useSpeechEvent = useSpeechRecognitionEvent ?? useNoOpSpeechEvent;
 
   // Check availability at mount
   useEffect(() => {
@@ -64,8 +78,7 @@ export function SearchBar({ value, onChangeText, placeholder = 'Rechercher un ob
     }
   }, [isListening, pulseAnim]);
 
-  // Speech recognition event hooks (safe to call unconditionally — hooks
-  // behind a ref-style guard so they don't break rules of hooks)
+  // Speech recognition event hooks
   const handleResult = useCallback(
     (ev: any) => {
       const transcript = ev?.results?.[0]?.transcript;
@@ -84,12 +97,9 @@ export function SearchBar({ value, onChangeText, placeholder = 'Rechercher un ob
     setIsListening(false);
   }, []);
 
-  // Conditionally register event listeners only if module exists
-  if (useSpeechRecognitionEvent) {
-    useSpeechRecognitionEvent('result', handleResult);
-    useSpeechRecognitionEvent('end', handleEnd);
-    useSpeechRecognitionEvent('error', handleError);
-  }
+  useSpeechEvent('result', handleResult);
+  useSpeechEvent('end', handleEnd);
+  useSpeechEvent('error', handleError);
 
   const handleMicPress = async () => {
     if (!ExpoSpeechRecognitionModule) return;

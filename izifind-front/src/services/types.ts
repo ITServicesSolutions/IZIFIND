@@ -92,3 +92,9 @@ export interface ObjectPayload {
   recompense?: string
   is_public: boolean
 }
+
+export interface Statistics {
+  perdus: number
+  trouves: number
+  postes: number
+}

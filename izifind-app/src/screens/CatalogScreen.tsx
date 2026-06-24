@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View, ScrollView, ActivityIndicator } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View, ScrollView, ActivityIndicator, LayoutAnimation, Platform, UIManager } from 'react-native';
+
+if (Platform.OS === 'android') {
+  if (UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+}
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppScreen } from '@/components/AppScreen';
@@ -49,11 +55,14 @@ export function CatalogScreen() {
 
   const filtered = useMemo(() => {
     const needle = normalizeText(query);
-    return items.filter((item) => {
+    const result = items.filter((item) => {
       const matchesStatus = activeStatus === 'all' || item.statut_id === activeStatus;
       const haystack = normalizeText(`${item.description} ${item.lieu ?? ''}`);
       return matchesStatus && (!needle || haystack.includes(needle));
     });
+    // Trigger layout animation when filtered list changes
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    return result;
   }, [activeStatus, items, query]);
 
   // Custom Header
@@ -78,65 +87,7 @@ export function CatalogScreen() {
     return 'circle-outline';
   };
 
-  // List Header with Search and Horizontal Category Chips
-  const ListHeader = () => (
-    <View style={styles.headerContainer}>
-      <View style={styles.searchWrapper}>
-        <SearchBar value={query} onChangeText={setQuery} placeholder="Rechercher par description ou lieu..." />
-      </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipsScroll}
-      >
-        <Pressable
-          onPress={() => setActiveStatus('all')}
-          style={[styles.chip, activeStatus === 'all' && styles.chipActive]}
-        >
-          <MaterialCommunityIcons
-            name="view-grid-outline"
-            size={14}
-            color={activeStatus === 'all' ? colors.white : colors.dark}
-          />
-          <Text style={[styles.chipText, activeStatus === 'all' && styles.chipTextActive]}>
-            Tous
-          </Text>
-        </Pressable>
-        {statuts.map((status) => {
-          const isActive = activeStatus === status.id;
-          return (
-            <Pressable
-              key={status.id}
-              onPress={() => setActiveStatus(status.id)}
-              style={[styles.chip, isActive && styles.chipActive]}
-            >
-              <MaterialCommunityIcons
-                name={getChipIcon(status.name)}
-                size={14}
-                color={isActive ? colors.white : colors.dark}
-              />
-              <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-                {status.name}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-
-      {/* Results count */}
-      <View style={styles.resultRow}>
-        <Text style={styles.resultLabel}>
-          {filtered.length} objet{filtered.length > 1 ? 's' : ''} trouvé{filtered.length > 1 ? 's' : ''}
-        </Text>
-        {query.length > 0 && (
-          <Pressable onPress={() => { setQuery(''); setActiveStatus('all'); }} hitSlop={8}>
-            <Text style={styles.clearText}>Réinitialiser</Text>
-          </Pressable>
-        )}
-      </View>
-    </View>
-  );
 
   return (
     <AppScreen header={HeaderComponent} scroll={false} style={styles.screen}>
@@ -144,7 +95,63 @@ export function CatalogScreen() {
         data={filtered}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.list}
-        ListHeaderComponent={ListHeader}
+        ListHeaderComponent={
+          <View style={styles.headerContainer}>
+            <View style={styles.searchWrapper}>
+              <SearchBar value={query} onChangeText={setQuery} placeholder="Rechercher par description ou lieu..." />
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.chipsScroll}
+            >
+              <Pressable
+                onPress={() => setActiveStatus('all')}
+                style={[styles.chip, activeStatus === 'all' && styles.chipActive]}
+              >
+                <MaterialCommunityIcons
+                  name="view-grid-outline"
+                  size={14}
+                  color={activeStatus === 'all' ? colors.white : colors.dark}
+                />
+                <Text style={[styles.chipText, activeStatus === 'all' && styles.chipTextActive]}>
+                  Tous
+                </Text>
+              </Pressable>
+              {statuts.map((status) => {
+                const isActive = activeStatus === status.id;
+                return (
+                  <Pressable
+                    key={status.id}
+                    onPress={() => setActiveStatus(status.id)}
+                    style={[styles.chip, isActive && styles.chipActive]}
+                  >
+                    <MaterialCommunityIcons
+                      name={getChipIcon(status.name)}
+                      size={14}
+                      color={isActive ? colors.white : colors.dark}
+                    />
+                    <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+                      {status.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
+            <View style={styles.resultRow}>
+              <Text style={styles.resultLabel}>
+                {filtered.length} objet{filtered.length > 1 ? 's' : ''} trouvé{filtered.length > 1 ? 's' : ''}
+              </Text>
+              {query.length > 0 && (
+                <Pressable onPress={() => { setQuery(''); setActiveStatus('all'); }} hitSlop={8}>
+                  <Text style={styles.clearText}>Réinitialiser</Text>
+                </Pressable>
+              )}
+            </View>
+          </View>
+        }
         ListEmptyComponent={
           !loading ? (
             <EmptyState

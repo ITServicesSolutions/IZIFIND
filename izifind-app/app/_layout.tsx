@@ -23,8 +23,8 @@ function RootNavigator() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(auth)" />
       <Stack.Screen name="object/[id]" />
     </Stack>
   );
@@ -43,7 +43,7 @@ export default function Layout() {
 const styles = StyleSheet.create({
   loadingContainer: {
     flex: 1,
-    backgroundColor: colors.bgAlt,
+    backgroundColor: colors.backgroundSoft,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,

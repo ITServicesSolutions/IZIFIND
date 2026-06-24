@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, StyleSheet, Text, View, Pressable } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, StyleSheet, Text, View, Pressable, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Google from 'expo-auth-session/providers/google';
@@ -23,8 +23,13 @@ export function LoginScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const googleClientId = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
+  const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || googleClientId || 'unconfigured';
+  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || googleClientId || 'unconfigured';
+
   const [googleRequest, googleResponse, promptGoogleAsync] = Google.useIdTokenAuthRequest({
-    clientId: googleClientId,
+    clientId: googleClientId || 'unconfigured',
+    androidClientId,
+    iosClientId,
   });
 
   useEffect(() => {
@@ -112,7 +117,13 @@ export function LoginScreen() {
             <Pressable
               style={[styles.googleButton, (!googleClientId || !googleRequest || googleLoading) && styles.googleButtonDisabled]}
               disabled={!googleClientId || !googleRequest || googleLoading}
-              onPress={() => promptGoogleAsync()}
+              onPress={() => {
+                if (googleClientId?.startsWith('dummy-')) {
+                  Alert.alert("Configuration Manquante", "Le bouton SSO Google est activé, mais nécessite un vrai Client ID Google dans le fichier .env pour fonctionner.");
+                } else {
+                  promptGoogleAsync();
+                }
+              }}
             >
               <MaterialCommunityIcons name="google" size={18} color={colors.dark} />
               <Text style={styles.googleButtonText}>

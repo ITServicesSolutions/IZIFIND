@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/images/logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FFFFFF"
+      "backgroundColor": "#0D1279"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -39,7 +39,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Autoriser IZIFIND à utiliser votre position pour afficher les objets perdus autour de vous."
         }
-      ]
+      ],
+      "expo-web-browser"
     ]
   }
 }

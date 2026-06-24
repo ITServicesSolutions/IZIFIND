@@ -18,6 +18,7 @@ const router = createRouter({
   routes: [
     { path: '/', name: 'home', component: HomeView },
     { path: '/catalog', name: 'catalog', component: () => import('../views/AnnoncesView.vue') },
+    { path: '/map', name: 'map', component: () => import('../views/MapView.vue') },
     { path: '/contact', name: 'contact', component: () => import('../views/public/ContactView.vue') },
     { path: '/declare', name: 'declare', component: () => import('../views/DeclarerView.vue') },
     { path: '/lost', redirect: '/declare?type=lost' },

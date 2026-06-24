@@ -56,7 +56,10 @@ const handleCTA = () => {
             <RouterLink to="/catalog" class="nav-link" @click="closeMenu">Annonces</RouterLink>
           </li>
           <li>
-            <a href="/#how-it-works" class="nav-link" @click="closeMenu">Comment ça marche</a>
+            <RouterLink to="/map" class="nav-link" @click="closeMenu">Carte</RouterLink>
+          </li>
+          <li>
+            <RouterLink to="/contact" class="nav-link" @click="closeMenu">Contact</RouterLink>
           </li>
           
           <!-- Authentication links -->

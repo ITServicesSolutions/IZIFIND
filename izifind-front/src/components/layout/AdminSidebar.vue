@@ -43,7 +43,13 @@ import logoUrl from '../../assets/legacy/img/logo.png'
 
 <style scoped>
 .layout-menu {
-  max-height: 100vh;
+  max-height: none;
   overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.layout-menu::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 </style>

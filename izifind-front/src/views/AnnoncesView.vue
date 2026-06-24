@@ -27,13 +27,21 @@
             <!-- Search Field -->
             <div class="filter-group">
               <label for="search">Recherche textuelle</label>
-              <input 
-                id="search"
-                v-model="filters.query" 
-                type="text" 
-                class="form-control" 
-                placeholder="Description, mots clés..." 
-              />
+              <div class="input-with-icon">
+                <svg viewBox="0 0 24 24" class="field-icon"><circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="1.8" /><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="1.8" /></svg>
+                <input 
+                  id="search"
+                  v-model="filters.query" 
+                  type="text" 
+                  class="form-control" 
+                  placeholder="Description, mots clés..." 
+                />
+                <button type="button" class="btn-voice" @click="toggleVoiceSearch" :class="{ listening: isListening }">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/>
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <!-- Status Filter -->
@@ -100,7 +108,7 @@
               <p>Chargement des annonces...</p>
             </div>
             
-            <div v-else-if="filteredObjects.length === 0" class="empty-state">
+            <div v-else-if="objets.length === 0" class="empty-state">
               <svg viewBox="0 0 24 24" class="empty-icon"><circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="1.8" /><line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="1.8" /></svg>
               <h3>Aucun résultat</h3>
               <p>Aucune annonce ne correspond à vos critères de recherche. Essayez d'élargir vos filtres.</p>
@@ -108,9 +116,9 @@
             </div>
 
             <div v-else>
-              <p class="results-count"><strong>{{ filteredObjects.length }}</strong> annonces trouvées</p>
+              <p class="results-count"><strong>{{ objets.length }}</strong> annonces trouvées</p>
               <div class="annonces-grid">
-                <div v-for="objet in filteredObjects" :key="objet.id" class="grid-item">
+                <div v-for="objet in objets" :key="objet.id" class="grid-item">
                   <AnnonceCard :object="objet" @click="openDetailModal" />
                 </div>
               </div>
@@ -160,9 +168,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { getObjects, LOST_STATUS_ID, FOUND_STATUS_ID } from '../services/objets'
+import { getObjects, LOST_STATUS_ID, FOUND_STATUS_ID, type GetObjectsParams } from '../services/objets'
 import { getCategories } from '../services/categories'
 import type { ObjectRecord, Category } from '../services/types'
 import AnnonceCard from '../components/AnnonceCard.vue'
@@ -183,6 +191,58 @@ const filters = ref({
   date: ''
 })
 
+// Voice search
+const isListening = ref(false)
+const recognition = ref<any>(null)
+
+onMounted(async () => {
+  // Initialize speech recognition if available
+  if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    recognition.value = new SpeechRecognition()
+    recognition.value.continuous = false
+    recognition.value.interimResults = false
+    recognition.value.lang = 'fr-FR'
+
+    recognition.value.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript
+      filters.value.query = transcript
+      isListening.value = false
+    }
+
+    recognition.value.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error)
+      isListening.value = false
+    }
+
+    recognition.value.onend = () => {
+      isListening.value = false
+    }
+  }
+
+  try {
+    const catsData = await getCategories()
+    categories.value = catsData
+    parseQueryParams()
+    await fetchObjects()
+  } catch (err) {
+    console.error(err)
+    error.value = 'Impossible de charger le catalogue des objets.'
+  }
+})
+
+const toggleVoiceSearch = () => {
+  if (!recognition.value) return
+
+  if (isListening.value) {
+    recognition.value.stop()
+    isListening.value = false
+  } else {
+    recognition.value.start()
+    isListening.value = true
+  }
+}
+
 // Read query params from route on load
 const parseQueryParams = () => {
   if (route.query.q) filters.value.query = String(route.query.q)
@@ -190,60 +250,52 @@ const parseQueryParams = () => {
   if (route.query.loc) filters.value.location = String(route.query.loc)
 }
 
-const filteredObjects = computed(() => {
-  const needle = filters.value.query.trim().toLowerCase()
-  const locNeedle = filters.value.location.trim().toLowerCase()
-
-  return objets.value.filter((objet) => {
-    // 1. Status Filter
-    const matchesStatus =
-      filters.value.status === 'all' ||
-      (filters.value.status === 'lost' && objet.statut_id === LOST_STATUS_ID) ||
-      (filters.value.status === 'found' && (objet.statut_id === FOUND_STATUS_ID || objet.statut_id === 3))
-
-    // 2. Category Filter
-    const matchesCategory =
-      !filters.value.category || objet.categorie_id === filters.value.category
-
-    // 3. Location Filter
-    const matchesLocation =
-      !locNeedle || (objet.lieu ?? '').toLowerCase().includes(locNeedle)
-
-    // 4. Query text filter
-    const matchesQuery =
-      !needle ||
-      objet.description.toLowerCase().includes(needle) ||
-      (objet.lieu ?? '').toLowerCase().includes(needle)
-
-    // 5. Date Filter (exact or near date)
-    const matchesDate =
-      !filters.value.date ||
-      (objet.date_action && objet.date_action.startsWith(filters.value.date))
-
-    return matchesStatus && matchesCategory && matchesLocation && matchesQuery && matchesDate
-  })
-})
-
-onMounted(async () => {
+const fetchObjects = async () => {
+  const params: GetObjectsParams = {}
+  
+  if (filters.value.query) {
+    params.search = filters.value.query
+  }
+  if (filters.value.category) {
+    params.categorie = filters.value.category
+  }
+  if (filters.value.status === 'lost') {
+    params.statut = LOST_STATUS_ID
+  } else if (filters.value.status === 'found') {
+    params.statut = FOUND_STATUS_ID
+  }
+  
   try {
-    const [objsData, catsData] = await Promise.all([
-      getObjects(),
-      getCategories()
-    ])
-    objets.value = objsData
-    categories.value = catsData
-    parseQueryParams()
+    loading.value = true
+    error.value = ''
+    const objsData = await getObjects(params)
+    // For location and date, we still filter locally since backend doesn't support it yet
+    let filtered = objsData
+    const locNeedle = filters.value.location.trim().toLowerCase()
+    if (locNeedle) {
+      filtered = filtered.filter(objet => (objet.lieu ?? '').toLowerCase().includes(locNeedle))
+    }
+    if (filters.value.date) {
+      filtered = filtered.filter(objet => objet.date_action.startsWith(filters.value.date))
+    }
+    objets.value = filtered
   } catch (err) {
     console.error(err)
     error.value = 'Impossible de charger le catalogue des objets.'
   } finally {
     loading.value = false
   }
-})
+}
 
 // Watch route query parameters to update filters dynamically
 watch(() => route.query, () => {
   parseQueryParams()
+  fetchObjects()
+}, { deep: true })
+
+// Watch filter changes
+watch(filters, () => {
+  fetchObjects()
 }, { deep: true })
 
 const resetFilters = () => {
@@ -375,6 +427,67 @@ const closeDetailModal = () => {
   font-weight: 600;
   color: var(--color-dark);
   margin-bottom: 0.5rem;
+}
+
+.input-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  position: relative;
+}
+
+.field-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  position: absolute;
+  left: 0.75rem;
+}
+
+.input-with-icon .form-control {
+  padding-left: 2.5rem;
+}
+
+.btn-voice {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  position: absolute;
+  right: 0.75rem;
+}
+
+.btn-voice:hover {
+  background: rgba(92, 214, 192, 0.1);
+  color: var(--color-primary);
+}
+
+.btn-voice.listening {
+  color: var(--color-primary);
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+.btn-voice svg {
+  width: 20px;
+  height: 20px;
 }
 
 /* Radio button tabs */

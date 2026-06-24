@@ -175,7 +175,9 @@ export function ProfileScreen() {
           style={styles.logoutBtn}
           onPress={async () => {
             await auth.logout();
-            router.replace('/login');
+            setTimeout(() => {
+              router.replace('/login');
+            }, 0);
           }}
         >
           <View style={styles.logoutIconCircle}>

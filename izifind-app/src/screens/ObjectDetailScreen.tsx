@@ -44,6 +44,12 @@ export function ObjectDetailScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [actionLoading, setActionLoading] = useState(false);
 
+  const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
+    if (viewableItems.length > 0) {
+      setActiveIndex(viewableItems[0].index ?? 0);
+    }
+  }).current;
+
   useEffect(() => {
     let mounted = true;
 
@@ -188,11 +194,6 @@ export function ObjectDetailScreen() {
     </View>
   );
 
-  const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
-    if (viewableItems.length > 0) {
-      setActiveIndex(viewableItems[0].index ?? 0);
-    }
-  }).current;
 
   return (
     <AppScreen header={HeaderComponent} contentContainerStyle={styles.scrollContent}>

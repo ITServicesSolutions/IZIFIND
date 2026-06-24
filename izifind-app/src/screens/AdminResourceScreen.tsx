@@ -9,6 +9,7 @@ import { Card } from '@/components/Card';
 import { ImagePickerField } from '@/components/ImagePickerField';
 import { InlineNotice } from '@/components/InlineNotice';
 import { Input } from '@/components/Input';
+import { SearchBar } from '@/components/SearchBar';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SelectField } from '@/components/SelectField';
 import { SectionHeader } from '@/components/SectionHeader';
@@ -669,21 +670,11 @@ export function AdminResourceScreen() {
           <>
             {/* Search Bar */}
             {!loading && items.length > 0 && (
-              <View style={styles.searchContainer}>
-                <MaterialCommunityIcons name="magnify" size={20} color={colors.textMuted} />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Rechercher..."
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  placeholderTextColor={colors.textMuted}
-                />
-                {searchQuery.length > 0 && (
-                  <Pressable onPress={() => setSearchQuery('')}>
-                    <MaterialCommunityIcons name="close" size={20} color={colors.textMuted} />
-                  </Pressable>
-                )}
-              </View>
+              <SearchBar
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder="Rechercher..."
+              />
             )}
 
             <FlatList
