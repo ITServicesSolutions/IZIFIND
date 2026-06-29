@@ -123,14 +123,36 @@ def login(request: Request, db: Session = Depends(get_db), form_data: OAuth2Pass
     description="Verifie un ID token Google, cree ou retrouve l'utilisateur, puis retourne un JWT IZIFIND."
 )
 def google_login(payload: GoogleAuthRequest, db: Session = Depends(get_db)) -> Any:
-    if not settings.GOOGLE_CLIENT_ID:
+    google_client_id = ""
+    for attr in ("GOOGLE_CLIENT_ID", "EXPO_PUBLIC_GOOGLE_CLIENT_ID"):
+        val = getattr(settings, attr, "")
+        if isinstance(val, str) and val:
+            google_client_id = val
+            break
+
+    if not google_client_id:
         raise HTTPException(status_code=503, detail="Google authentication is not configured")
 
+    allowed_audiences = [google_client_id]
+    
+    for attr in ("GOOGLE_ANDROID_CLIENT_ID", "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID"):
+        val = getattr(settings, attr, "")
+        if isinstance(val, str) and val:
+            allowed_audiences.append(val)
+            break
+
+    for attr in ("GOOGLE_IOS_CLIENT_ID", "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID"):
+        val = getattr(settings, attr, "")
+        if isinstance(val, str) and val:
+            allowed_audiences.append(val)
+            break
+
     try:
+        aud_param = allowed_audiences[0] if len(allowed_audiences) == 1 else allowed_audiences
         claims = google_id_token.verify_oauth2_token(
             payload.id_token,
             google_requests.Request(),
-            settings.GOOGLE_CLIENT_ID,
+            aud_param,
         )
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid Google token")

@@ -1,74 +1,69 @@
-# IZIFIND
+# IZIFIND API - Backend
 
-IZIFIND est maintenant organise en deux applications :
+Ce projet constitue le backend de la plateforme **IZIFIND**. Il fournit les APIs REST nécessaires pour la gestion des utilisateurs, l'authentification (y compris le SSO Google), la déclaration et le catalogue des objets perdus/trouvés.
 
-- `app/` : backend FastAPI avec SQLAlchemy, Alembic et JWT ;
-- `frontend/` : SPA Vue 3 + TypeScript servie par Vite.
+## 🛠️ Stack Technique
 
-Les anciens templates et assets Django ont ete retires.
+* **Framework** : FastAPI (Python)
+* **Base de données** : SQLite (par défaut, configurable en PostgreSQL)
+* **ORM** : SQLAlchemy
+* **Authentification** : JWT (JSON Web Tokens) & Google SSO via `google-auth`
+* **Validation de données** : Pydantic
 
-## Backend
+## 🚀 Installation & Exécution
 
-```powershell
-env\Scripts\activate
+### 1. Prérequis
+Assurez-vous d'avoir Python 3.10+ d'installé.
+
+### 2. Cloner le dépôt et entrer dans le dossier
+```bash
+cd izifind-api
+```
+
+### 3. Créer et activer un environnement virtuel
+```bash
+python -m venv venv
+# Sur Windows (PowerShell) :
+.\venv\Scripts\Activate.ps1
+# Sur macOS/Linux :
+source venv/bin/activate
+```
+
+### 4. Installer les dépendances
+```bash
 pip install -r requirements.txt
-python app/seed.py
-uvicorn app.main:app --reload
 ```
 
-### 🗄️ Base de données
-Par défaut, le projet utilise une base de données **SQLite** (le fichier généré sera `db.sqlite3` à la racine).
+### 5. Configurer les variables d'environnement
+Copiez le fichier `.env.example` en `.env` :
+```bash
+cp .env.example .env
+```
+Remplissez les variables d'environnement dans le fichier `.env` (notamment la `SECRET_KEY`, la configuration SMTP si nécessaire, et les Client IDs Google pour l'authentification).
 
-Pour passer sur **PostgreSQL**, créez un fichier `.env` à la racine avec le contenu suivant :
-```env
-DATABASE_ENGINE=postgres
-DATABASE_NAME=izifind
-DATABASE_USER=postgres
-DATABASE_PASSWORD=votre_mot_de_passe
-DATABASE_HOST=localhost
-DATABASE_PORT=5432
+### 6. Initialiser/Semer la base de données
+```bash
+python -m app.seed
 ```
 
-### 🔑 Données de test (Seed)
-Le script `python app/seed.py` injecte automatiquement des données essentielles pour vos tests.
-Voici les identifiants créés par défaut :
-
-| Rôle | Nom d'utilisateur | Email | Mot de passe |
-|---|---|---|---|
-| Administrateur | `admin` | `admin@izifind.local` | `admin` |
-| Commissaire | `commissaire1` | `commissaire1@izifind.local` | `commissaire` |
-
-URLs utiles :
-
-- API : http://127.0.0.1:8000/api
-- Swagger : http://127.0.0.1:8000/docs
-- Redoc : http://127.0.0.1:8000/redoc
-
-## Frontend
-
-```powershell
-cd frontend
-npm install
-npm run dev
-npm run build
+### 8. Lancer le serveur de développement
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
+L'API sera disponible sur : [http://localhost:8000](http://localhost:8000)
+La documentation interactive de l'API (Swagger) sera accessible sur : [http://localhost:8000/docs](http://localhost:8000/docs)
 
-Par defaut, le frontend consomme `http://localhost:8000/api`. Pour changer l'URL :
+## 📁 Structure du Projet
 
-```env
-VITE_API_BASE_URL=http://localhost:8000/api
-```
-
-## Endpoints principaux
-
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `GET /api/auth/me`
-- `GET /api/categories`
-- `POST /api/categories`
-- `GET /api/objets`
-- `POST /api/objets`
-- `GET /api/rbac/roles`
-- `POST /api/rbac/roles`
-- `GET /api/rbac/permissions`
-- `POST /api/rbac/permissions`
+* `app/` : Code source de l'application FastAPI.
+  * `config.py` : Gestion des variables d'environnement et de la configuration de l'application.
+  * `database.py` : Configuration de la connexion SQLAlchemy.
+  * `dependencies.py` : Dépendances FastAPI (comme la vérification de l'utilisateur connecté).
+  * `main.py` : Point d'entrée de l'application FastAPI.
+  * `models/` : Modèles de la base de données SQLAlchemy.
+  * `routers/` : Les contrôleurs / routes de l'API (auth, objets, catégories, etc.).
+  * `schemas/` : Schémas Pydantic pour la validation des requêtes et réponses.
+  * `security.py` : Fonctions utilitaires de hachage de mot de passe et de génération de JWT.
+* `tests/` : Suite de tests unitaires et d'intégration.
+* `requirements.txt` : Liste des dépendances Python requises.
+* `.env` : Fichier de configuration d'environnement local.

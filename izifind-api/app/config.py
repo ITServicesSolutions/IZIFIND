@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     SENDER_NAME: str = "IZIFIND API"
     FRONTEND_URL: str = "http://localhost:3000"
     GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_ANDROID_CLIENT_ID: str = ""
+    GOOGLE_IOS_CLIENT_ID: str = ""
+    EXPO_PUBLIC_GOOGLE_CLIENT_ID: str = ""
+    EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID: str = ""
+    EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: str = ""
 
     @property
     def DATABASE_URL(self) -> str:

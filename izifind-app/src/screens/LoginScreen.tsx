@@ -28,8 +28,8 @@ export function LoginScreen() {
 
   const [googleRequest, googleResponse, promptGoogleAsync] = Google.useIdTokenAuthRequest({
     clientId: googleClientId || 'unconfigured',
-    androidClientId,
-    iosClientId,
+    androidClientId: __DEV__ ? undefined : androidClientId,
+    iosClientId: __DEV__ ? undefined : iosClientId,
   });
 
   useEffect(() => {

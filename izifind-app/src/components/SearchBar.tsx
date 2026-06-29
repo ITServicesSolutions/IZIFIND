@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { StyleSheet, TextInput, View, Pressable, Animated, Platform } from 'react-native';
+import { StyleSheet, TextInput, View, Pressable, Animated, Platform, Alert } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors, radius, spacing, fontSizes } from '@/constants/theme';
 
@@ -102,7 +102,13 @@ export function SearchBar({ value, onChangeText, placeholder = 'Rechercher un ob
   useSpeechEvent('error', handleError);
 
   const handleMicPress = async () => {
-    if (!ExpoSpeechRecognitionModule) return;
+    if (!ExpoSpeechRecognitionModule || !voiceAvailable) {
+      Alert.alert(
+        'Recherche vocale',
+        "La recherche vocale n'est pas supportée sur cet appareil ou ce navigateur. Veuillez utiliser la recherche textuelle."
+      );
+      return;
+    }
 
     if (isListening) {
       ExpoSpeechRecognitionModule.stop();
@@ -153,17 +159,15 @@ export function SearchBar({ value, onChangeText, placeholder = 'Rechercher un ob
           <MaterialCommunityIcons name="close-circle" size={18} color={colors.textMuted} />
         </Pressable>
       )}
-      {voiceAvailable && (
-        <Pressable onPress={handleMicPress} style={styles.micButton} accessibilityLabel="Recherche vocale">
-          <Animated.View style={{ transform: [{ scale: pulseAnim }], opacity: pulseOpacity }}>
-            <MaterialCommunityIcons
-              name={isListening ? 'microphone' : 'microphone-outline'}
-              size={20}
-              color={isListening ? colors.lost : colors.primary}
-            />
-          </Animated.View>
-        </Pressable>
-      )}
+      <Pressable onPress={handleMicPress} style={styles.micButton} accessibilityLabel="Recherche vocale">
+        <Animated.View style={{ transform: [{ scale: pulseAnim }], opacity: pulseOpacity }}>
+          <MaterialCommunityIcons
+            name={isListening ? 'microphone' : 'microphone-outline'}
+            size={20}
+            color={isListening ? colors.lost : colors.primary}
+          />
+        </Animated.View>
+      </Pressable>
     </View>
   );
 }

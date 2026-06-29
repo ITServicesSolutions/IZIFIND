@@ -16,10 +16,19 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.izifind.app"
+      "bundleIdentifier": "com.izifind.app",
+      "infoPlist": {
+        "NSSpeechRecognitionUsageDescription": "Autoriser IZIFIND à utiliser la reconnaissance vocale.",
+        "NSMicrophoneUsageDescription": "Autoriser IZIFIND à accéder au microphone pour la recherche vocale."
+      }
     },
     "android": {
-      "package": "com.izifind.app"
+      "package": "com.izifind.app",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -41,6 +50,12 @@
         }
       ],
       "expo-web-browser"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "52b19c86-251d-49cc-a3dd-024a5dd14ca4"
+      }
+    }
   }
 }
