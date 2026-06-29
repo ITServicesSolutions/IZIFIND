@@ -117,12 +117,15 @@ const handleCardClick = () => {
 
 .annonce-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(26, 26, 46, 0.08);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(244, 149, 23, 0.2);
 }
 
 .annonce-card:hover .btn-voir {
-  background-color: var(--color-primary-hover);
+  background: var(--gradient-primary);
   color: #FFFFFF;
+  border-color: transparent;
+  box-shadow: var(--shadow-glow);
 }
 
 .card-image-wrapper {
@@ -139,24 +142,6 @@ const handleCardClick = () => {
   top: 12px;
   right: 12px;
   z-index: 10;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-radius: 20px;
-  padding: 0.35rem 0.85rem;
-}
-
-.badge-lost {
-  background-color: #FFF0F0;
-  color: var(--color-lost);
-  border: 1px solid rgba(255, 107, 107, 0.15);
-}
-
-.badge-found {
-  background-color: #E6FAF6;
-  color: var(--color-primary);
-  border: 1px solid rgba(92, 214, 192, 0.15);
 }
 
 .category-icon-container {

@@ -13,6 +13,7 @@ const isEditModalOpen = ref(false)
 const editingProfile = ref({
   username: '',
   email: '',
+  phone: '',
   commissariat_id: null as number | null
 })
 const savingProfile = ref(false)
@@ -34,6 +35,7 @@ const openEditModal = () => {
   editingProfile.value = {
     username: authStore.user?.username || '',
     email: authStore.user?.email || '',
+    phone: authStore.user?.phone || '',
     commissariat_id: authStore.user?.commissariat?.id || null
   }
   profileError.value = ''
@@ -95,6 +97,7 @@ onMounted(() => {
     editingProfile.value = {
       username: authStore.user.username,
       email: authStore.user.email,
+      phone: authStore.user.phone || '',
       commissariat_id: authStore.user.commissariat?.id || null
     }
   }
@@ -128,6 +131,10 @@ onMounted(() => {
           <li>
             <strong>Email</strong>
             <span>{{ authStore.user?.email }}</span>
+          </li>
+          <li v-if="authStore.user?.phone">
+            <strong>Téléphone</strong>
+            <span>{{ authStore.user?.phone }}</span>
           </li>
           <li v-if="authStore.user?.commissariat">
             <strong>Commissariat</strong>
@@ -181,6 +188,10 @@ onMounted(() => {
         <div class="form-group">
           <label class="form-label">Email</label>
           <input v-model="editingProfile.email" type="email" class="form-control" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Téléphone</label>
+          <input v-model="editingProfile.phone" type="tel" class="form-control" />
         </div>
         <div class="btn-group" style="justify-content: flex-end;">
           <button class="btn btn-secondary" type="button" @click="closeEditModal">Annuler</button>

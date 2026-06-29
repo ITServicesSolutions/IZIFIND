@@ -36,7 +36,7 @@ const socialLinks = [
             <RouterLink to="/">Accueil</RouterLink>
             <RouterLink to="/catalog">Annonces</RouterLink>
             <RouterLink to="/contact">Contact</RouterLink>
-            <RouterLink to="/profile">Mon Espace</RouterLink>
+            <RouterLink to="/profile">Profile</RouterLink>
           </nav>
         </div>
         

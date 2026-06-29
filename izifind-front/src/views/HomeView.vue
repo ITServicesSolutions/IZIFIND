@@ -1,10 +1,14 @@
 <template>
   <main class="home-view">
-    <!-- Hero Section -->
+    <!-- Premium Hero Section -->
     <section class="hero-section">
+      <!-- Background Abstract Shapes -->
+      <div class="hero-bg-shape shape-1 animate-float"></div>
+      <div class="hero-bg-shape shape-2 animate-float delay-200"></div>
+      
       <div class="site-container hero-container">
-        <div class="hero-content">
-          <h1>Retrouvez ce que vous avez perdu</h1>
+        <div class="hero-content animate-fade-in-up">
+          <h1 class="hero-title">Retrouvez ce que vous avez <span class="highlight-text">perdu</span></h1>
           <p class="hero-subtitle">
             IziFind vous connecte instantanément avec les personnes ayant retrouvé vos objets précieux. Déclarez, recherchez et restituez en toute simplicité.
           </p>
@@ -27,8 +31,8 @@
           </div>
         </div>
         
-        <!-- Interactive Search Bar integrated in Hero -->
-        <div class="search-bar-container">
+        <!-- Interactive Search Bar integrated in Hero with Glassmorphism -->
+        <div class="search-bar-container glass-panel animate-fade-in-up delay-200">
           <form class="search-form" @submit.prevent="handleSearch">
             <div class="search-field">
               <label for="search-input">Recherche</label>
@@ -77,7 +81,7 @@
         </div>
         
         <div class="steps-grid">
-          <div class="step-card">
+          <div class="step-card animate-fade-in-up">
             <div class="step-number">1</div>
             <div class="step-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -89,7 +93,7 @@
             <p>Renseignez les détails, la date et le lieu où l'objet a été perdu ou trouvé en quelques clics.</p>
           </div>
 
-          <div class="step-card">
+          <div class="step-card animate-fade-in-up delay-100">
             <div class="step-number">2</div>
             <div class="step-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -101,7 +105,7 @@
             <p>Notre système de matching compare les signalements et vous aide à valider l'appartenance.</p>
           </div>
 
-          <div class="step-card">
+          <div class="step-card animate-fade-in-up delay-200">
             <div class="step-number">3</div>
             <div class="step-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -223,6 +227,7 @@ import { getCategories } from '../services/categories'
 import { getStatistics } from '../services/statistics'
 import type { ObjectRecord, Category, Statistics } from '../services/types'
 import AnnonceCard from '../components/AnnonceCard.vue'
+import Swal from 'sweetalert2'
 
 // Import legacy partner assets
 import client1 from '../assets/legacy/img/clients/client-1.png'
@@ -306,7 +311,15 @@ onMounted(async () => {
 })
 
 const toggleVoiceSearch = () => {
-  if (!recognition.value) return
+  if (!recognition.value) {
+    Swal.fire({
+      icon: 'info',
+      title: 'Recherche vocale non supportée',
+      text: 'Votre navigateur ne permet pas l\'utilisation de la recherche vocale. Veuillez utiliser la recherche textuelle.',
+      confirmButtonColor: '#f49517'
+    })
+    return
+  }
 
   if (isListening.value) {
     recognition.value.stop()
@@ -343,10 +356,36 @@ const closeDetailModal = () => {
 <style scoped>
 /* Hero section styling */
 .hero-section {
-  background: linear-gradient(135deg, rgba(92, 214, 192, 0.15) 0%, rgba(255, 255, 255, 0) 100%);
-  padding: 5rem 0 7rem;
+  background: radial-gradient(circle at 10% 20%, rgba(244, 149, 23, 0.08) 0%, rgba(255, 255, 255, 0) 90%),
+              radial-gradient(circle at 90% 80%, rgba(11, 184, 146, 0.08) 0%, rgba(255, 255, 255, 0) 90%);
+  padding: 6rem 0 8rem;
   position: relative;
   overflow: hidden;
+}
+
+/* Background Abstract Shapes */
+.hero-bg-shape {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  z-index: 0;
+  opacity: 0.6;
+}
+
+.shape-1 {
+  width: 400px;
+  height: 400px;
+  background: rgba(244, 149, 23, 0.2);
+  top: -100px;
+  right: -100px;
+}
+
+.shape-2 {
+  width: 300px;
+  height: 300px;
+  background: rgba(11, 184, 146, 0.2);
+  bottom: -50px;
+  left: -50px;
 }
 
 .hero-container {
@@ -354,26 +393,39 @@ const closeDetailModal = () => {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 3rem;
+  gap: 3.5rem;
+  position: relative;
+  z-index: 1;
 }
 
 .hero-content {
-  max-width: 800px;
+  max-width: 850px;
 }
 
-.hero-content h1 {
-  font-size: 3rem;
-  line-height: 1.2;
+.hero-title {
+  font-size: 4rem;
+  line-height: 1.15;
   margin-bottom: 1.5rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--color-dark);
+  letter-spacing: -1px;
+}
+
+.highlight-text {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
 }
 
 .hero-subtitle {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   color: var(--color-text-muted);
   line-height: 1.6;
-  margin-bottom: 2.5rem;
+  margin-bottom: 3rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .hero-ctas {
@@ -383,27 +435,22 @@ const closeDetailModal = () => {
 }
 
 .btn-hero {
-  padding: 0.9rem 2rem;
-  font-size: 1rem;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 600;
-  gap: 0.5rem;
+  padding: 1rem 2.5rem;
+  font-size: 1.1rem;
+  gap: 0.75rem;
 }
 
 .btn-icon-svg {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
 }
 
 /* Search bar inside Hero */
 .search-bar-container {
   width: 100%;
   max-width: 1000px;
-  background-color: #FFFFFF;
   border-radius: var(--border-radius-btn);
   padding: 0.75rem;
-  box-shadow: 0 12px 30px rgba(26, 26, 46, 0.08);
-  border: 1px solid rgba(26, 26, 46, 0.05);
 }
 
 .search-form {
@@ -418,7 +465,7 @@ const closeDetailModal = () => {
   flex-direction: column;
   align-items: flex-start;
   padding: 0 1rem;
-  border-right: 1px solid #E2E8F0;
+  border-right: 1px solid var(--color-border);
 }
 
 .search-field:nth-child(3) {

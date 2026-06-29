@@ -15,6 +15,7 @@ export interface User {
   id: number
   username: string
   email: string
+  phone?: string | null
   is_active: boolean
   is_superuser: boolean
   roles: Role[]
@@ -55,10 +56,10 @@ export interface Statut {
 export interface Commissariat {
   id: number
   name: string
-  address?: string | null
+  adresse?: string | null
   phone?: string | null
-  latitude?: number | null
-  longitude?: number | null
+  latitude: number
+  longitude: number
 }
 
 export interface ObjectRecord {
@@ -91,6 +92,53 @@ export interface ObjectPayload {
   contact_email?: string
   recompense?: string
   is_public: boolean
+}
+
+export interface ImageObjet {
+  id: number
+  objet_id: number
+  name: string
+  image_url: string
+  caption?: string | null
+  date: string
+}
+
+export interface TestimonialUser {
+  id: number
+  username: string
+}
+
+export interface TitreObjet {
+  id: number
+  name: string
+  type_id: number
+  description?: string | null
+}
+
+export interface ModifierObjet {
+  id: number
+  objet_id: number
+  change: string
+  confirm: boolean
+  date: string
+}
+
+export interface Promesse {
+  id: number
+  objet_id: number
+  montant: number
+  pourcentage_frais: number
+  date: string
+}
+
+export interface Temoignage {
+  id: number
+  objet_id: number
+  user_id: number
+  user?: TestimonialUser | null
+  contenu: string
+  rating: number
+  date: string
 }
 
 export interface Statistics {

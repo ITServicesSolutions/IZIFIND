@@ -38,7 +38,7 @@
           </ul>
         </div>
 
-        <div class="wizard-card card">
+        <div class="wizard-card card glass-panel">
           <form @submit.prevent="submitForm">
             <!-- STEP 1: Lost or Found -->
             <section v-if="currentStep === 1" class="step-section">
@@ -123,7 +123,7 @@
                 </div>
                 <div class="form-group">
                   <label>Statut</label>
-                  <input class="form-control" :value="form.statut_id === LOST_STATUS_ID ? 'Perdu' : 'Trouvé'" readonly />
+                  <input class="form-control form-control-readonly" :value="form.statut_id === LOST_STATUS_ID ? 'Perdu' : 'Trouvé'" readonly />
                 </div>
               </div>
 
@@ -650,7 +650,10 @@ const submitForm = async () => {
 /* Wizard card styling */
 .wizard-card {
   padding: 2.5rem;
-  box-shadow: 0 8px 30px rgba(26, 26, 46, 0.04);
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-card);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
 }
 
 .step-title {
@@ -904,6 +907,12 @@ const submitForm = async () => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
+}
+
+.form-control-readonly {
+  background-color: #E2E8F0;
+  color: #64748B;
+  cursor: not-allowed;
 }
 
 @media (max-width: 575px) {

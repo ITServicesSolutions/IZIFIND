@@ -20,6 +20,21 @@ export async function getObjects(params?: GetObjectsParams) {
   return data
 }
 
+export async function getObjectById(id: number) {
+  const { data } = await api.get<ObjectRecord>(`/objets/${id}`)
+  return data
+}
+
+export async function transmettreObjet(objetId: number) {
+  const { data } = await api.put<ObjectRecord>(`/commissariats/objets/${objetId}/transmettre`)
+  return data
+}
+
+export async function validerObjet(objetId: number) {
+  const { data } = await api.put<ObjectRecord>(`/commissariats/objets/${objetId}/valider`)
+  return data
+}
+
 export async function createObject(payload: ObjectPayload) {
   const { data } = await api.post<ObjectRecord>('/objets', payload)
   return data

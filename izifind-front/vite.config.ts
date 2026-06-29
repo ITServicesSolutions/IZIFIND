@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue'
 
 // https://vite.dev/config/
 export default defineConfig({
+  envPrefix: ['VITE_', 'EXPO_'],
   plugins: [vue()],
   server: {
     proxy: {

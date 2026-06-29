@@ -11,12 +11,12 @@
 
     <section class="catalog-section">
       <div class="site-container">
-        <div class="page-header--left mb-4">
+        <div class="page-header--left mb-4 animate-fade-in-up">
           <h2>Rechercher un objet perdu ou trouvé</h2>
           <p class="page-subtitle">Parcourez les annonces publiées par notre communauté pour retrouver vos effets personnels.</p>
         </div>
 
-        <div class="catalog-layout">
+        <div class="catalog-layout animate-fade-in-up delay-100">
           <!-- Sidebar Filters -->
           <aside class="filters-sidebar">
             <div class="sidebar-header">
@@ -174,6 +174,7 @@ import { getObjects, LOST_STATUS_ID, FOUND_STATUS_ID, type GetObjectsParams } fr
 import { getCategories } from '../services/categories'
 import type { ObjectRecord, Category } from '../services/types'
 import AnnonceCard from '../components/AnnonceCard.vue'
+import Swal from 'sweetalert2'
 
 const route = useRoute()
 
@@ -232,7 +233,15 @@ onMounted(async () => {
 })
 
 const toggleVoiceSearch = () => {
-  if (!recognition.value) return
+  if (!recognition.value) {
+    Swal.fire({
+      icon: 'info',
+      title: 'Recherche vocale non supportée',
+      text: 'Votre navigateur ne permet pas l\'utilisation de la recherche vocale. Veuillez utiliser la recherche textuelle.',
+      confirmButtonColor: '#f49517'
+    })
+    return
+  }
 
   if (isListening.value) {
     recognition.value.stop()
@@ -383,12 +392,19 @@ const closeDetailModal = () => {
 
 /* Sidebar styling */
 .filters-sidebar {
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
   border-radius: var(--border-radius-card);
-  border: 1px solid rgba(26, 26, 46, 0.05);
+  border: 1px solid var(--color-border);
   padding: 1.5rem;
-  box-shadow: 0 4px 15px rgba(26, 26, 46, 0.02);
+  box-shadow: var(--shadow-sm);
   align-self: start;
+  position: sticky;
+  top: 100px;
+  transition: var(--transition-smooth);
+}
+
+.filters-sidebar:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .sidebar-header {
@@ -594,9 +610,9 @@ const closeDetailModal = () => {
 .empty-state {
   text-align: center;
   padding: 5rem 2rem;
-  background-color: #FFFFFF;
+  background-color: var(--color-surface);
   border-radius: var(--border-radius-card);
-  border: 1px solid rgba(26, 26, 46, 0.05);
+  border: 1px dashed var(--color-border);
   color: var(--color-text-muted);
 }
 

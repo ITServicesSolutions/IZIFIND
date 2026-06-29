@@ -31,6 +31,14 @@ export const useAuthStore = defineStore('auth', {
     async register(user: { username: string; email: string; password: string }) {
       await api.post('/auth/register', user);
     },
+    async googleLogin(idToken: string) {
+      const response = await api.post('/auth/google', { id_token: idToken });
+      this.token = response.data.access_token;
+      if (this.token) {
+        localStorage.setItem('token', this.token);
+      }
+      await this.fetchUser();
+    },
     async fetchUser() {
       if (!this.token) return;
       try {

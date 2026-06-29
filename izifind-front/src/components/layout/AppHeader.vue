@@ -90,14 +90,18 @@ const handleCTA = () => {
 
 <style scoped>
 .site-header {
-  background-color: #FFFFFF;
-  border-bottom: 1px solid rgba(26, 26, 46, 0.05);
+  background-color: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: var(--shadow-sm);
   position: sticky;
   top: 0;
   z-index: 1000;
-  height: 80px;
+  height: 85px;
   display: flex;
   align-items: center;
+  transition: var(--transition-smooth);
 }
 
 .header-inner {
@@ -112,15 +116,16 @@ const handleCTA = () => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--color-primary);
-  font-family: 'Poppins', sans-serif;
+  color: var(--color-dark);
+  font-family: var(--font-heading);
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 800;
   text-decoration: none;
+  letter-spacing: -0.5px;
 }
 
 .logo-img {
-  max-height: 40px;
+  max-height: 44px;
   object-fit: contain;
 }
 
@@ -131,42 +136,68 @@ const handleCTA = () => {
   margin: 0;
   padding: 0;
   align-items: center;
-  gap: 2rem;
+  gap: 2.5rem;
 }
 
 .nav-link {
-  color: var(--color-dark);
-  font-family: 'Poppins', sans-serif;
-  font-weight: 500;
+  color: var(--color-text);
+  font-family: var(--font-heading);
+  font-weight: 600;
   font-size: 0.95rem;
+  text-decoration: none;
+  position: relative;
   transition: var(--transition-smooth);
+  padding: 0.5rem 0;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: 0;
+  left: 0;
+  background-color: var(--color-primary);
+  transition: var(--transition-smooth);
+  border-radius: 2px;
 }
 
 .nav-link:hover, .nav-link.router-link-active {
   color: var(--color-primary);
 }
 
+.nav-link:hover::after, .nav-link.router-link-active::after {
+  width: 100%;
+}
+
+.nav-auth-link {
+  color: var(--color-dark);
+}
+
 .btn-logout-link {
-  background: none;
+  background: rgba(255, 82, 82, 0.1);
   border: none;
+  border-radius: var(--border-radius-btn);
   color: var(--color-lost);
-  font-family: 'Poppins', sans-serif;
-  font-weight: 500;
-  font-size: 0.95rem;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
-  padding: 0;
+  padding: 0.5rem 1.2rem;
   transition: var(--transition-smooth);
 }
 
 .btn-logout-link:hover {
-  opacity: 0.8;
+  background: var(--color-lost);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow-lost);
 }
 
 /* CTA */
 .btn-cta {
-  font-family: 'Poppins', sans-serif;
-  padding: 0.6rem 1.5rem;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  padding: 0.75rem 1.8rem;
 }
 
 /* Mobile Menu Toggle */
@@ -174,8 +205,8 @@ const handleCTA = () => {
   display: none;
   flex-direction: column;
   justify-content: space-between;
-  width: 24px;
-  height: 18px;
+  width: 28px;
+  height: 20px;
   background: none;
   border: none;
   cursor: pointer;
@@ -186,6 +217,7 @@ const handleCTA = () => {
   width: 100%;
   height: 2px;
   background-color: var(--color-dark);
+  border-radius: 2px;
   transition: var(--transition-smooth);
 }
 
@@ -202,23 +234,30 @@ const handleCTA = () => {
   .navbar {
     display: none;
     position: absolute;
-    top: 80px;
+    top: 85px;
     left: 0;
     right: 0;
-    background-color: #FFFFFF;
-    border-bottom: 1px solid rgba(26, 26, 46, 0.08);
-    padding: 1.5rem;
-    box-shadow: 0 10px 15px rgba(26, 26, 46, 0.05);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--color-border);
+    padding: 2rem;
+    box-shadow: var(--shadow-lg);
   }
 
   .navbar-mobile {
     display: block;
+    animation: fadeInDown 0.3s ease;
+  }
+
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .navbar ul {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 1.25rem;
+    align-items: center;
+    gap: 1.5rem;
   }
 }
 </style>
